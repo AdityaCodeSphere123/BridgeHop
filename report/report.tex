@@ -1,0 +1,83 @@
+% COL764 A4 report - at most 2 pages. Compile: pdflatex report.tex  (or upload to Overleaf), then copy
+% report.pdf to the repository root so that make_submission.py picks it up.
+% Every TODO must be replaced with numbers from your own runs (dev/compare.py, dev/analyze.py).
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.8cm]{geometry}
+\usepackage{booktabs,microtype,enumitem}
+\setlist{nosep,leftmargin=*}
+\setlength{\parskip}{3pt}\setlength{\parindent}{0pt}
+
+\title{\vspace{-1.6cm}COL764 Assignment 4: Iterative Retrieval for Multi-hop QA}
+\author{TODO Name \quad TODO Entry number}
+\date{\vspace{-0.8cm}}
+
+\begin{document}
+\maketitle
+
+\section{Single-shot vs.\ iterative (dev set, TODO $n$ questions)}
+\begin{center}
+\begin{tabular}{lcccccc}
+\toprule
+System & EM & Answer F1 & Evidence F1 & Searches / q & LLM calls / q & $S$ \\
+\midrule
+% paste the LaTeX rows printed by: python dev/compare.py runs/<b1> runs/<ours> --names B1 Ours
+B1 (single-shot) & TODO & TODO & TODO & 1.00 & 1.00 & TODO \\
+Ours (iterative) & TODO & TODO & TODO & TODO & TODO & TODO \\
+\bottomrule
+\end{tabular}
+\end{center}
+Retrieval diagnostics (from \texttt{dev/analyze.py}): both gold paragraphs are retrieved for TODO\% of
+questions (B1: TODO\%), and the agent's bridge entity matches the gold bridge for TODO\%.
+
+\section{Design}
+\textbf{Plan and \texttt{next\_query}.} One LLM call decomposes the question into two single-hop
+sub-questions, the second referring to the first answer as \#1 (four in-context examples). Hop~1 searches
+both $Q_1$ ($k{=}6$) and the original question ($k{=}4$): the latter's extra context words often rank the
+bridge paragraph when $Q_1$ alone is too short for BM25. After hop~1 is read, the bridge entity is
+substituted into $Q_2$ and the agent issues two queries: the filled-in $Q_2$ ($k{=}6$) and the bridge
+entity on its own ($k{=}4$), which retrieves the bridge's own article, where hop-2 facts (spouse,
+birthplace, founding date, \dots) usually live. If a read fails, the next query is the current
+sub-question prefixed with the title of the best retrieved passage not yet used (a candidate bridge
+entity) at $k{=}10$, so queries always depend on earlier results and never repeat. Searches are cheap
+and LLM calls scarce, so the budget is spent on two complementary queries per hop rather than more reads.
+
+\textbf{\texttt{should\_stop} and \texttt{answer}.} Each round ends with one \emph{read} call that
+asks for the supporting passage number first and then the shortest answer span (evidence-first output
+grounds the 4B model). The first read of a hop may say ``unknown''; that triggers another round, whose
+read must give a best guess. The agent stops as soon as hop~2 is answered, or when only one LLM call or
+less than 15\,s remains; that last call is reserved for a forced best-guess answer over all evidence. The
+two citations are the passages that the hop-1 and hop-2 reads point to (each checked to actually contain
+its answer, else the best-ranked passage that does): gold evidence is exactly two paragraphs, so citing
+two rather than three raises evidence precision. A typical question uses TODO searches and TODO LLM calls.
+
+\textbf{What did not help.} TODO (e.g.\ a free-form chain-of-thought read: longer outputs, slower, and
+answer F1 dropped from TODO to TODO because the model wrapped answers in sentences).
+
+\section{Error analysis}
+Ten dev questions the agent gets wrong (EM $=0$), labelled by hand (starting from the automatic labels of
+\texttt{dev/analyze.py}):
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Category & Count \\
+\midrule
+(i) bridge entity not found & TODO \\
+(ii) stopped too early & TODO \\
+(iii) evidence retrieved but answered wrongly & TODO \\
+(iv) answer correct but marked wrong & TODO \\
+(v) other & TODO \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{Example 1 (TODO category).} TODO question id, question, gold vs.\ predicted answer, what the
+queries retrieved, and why it failed.
+
+\textbf{Example 2 (TODO category).} TODO.
+
+\section{AI-use disclosure and code provenance}
+TODO: state honestly which tools you used and for what (e.g.\ an AI coding assistant helped draft
+\texttt{agent.py} and the analysis scripts in \texttt{dev/}; all design choices, experiments, numbers and
+this report were checked by me). The starter code (\texttt{a4/}, \texttt{run\_dev.py}, the baseline)
+is from the course repository.
+
+\end{document}
