@@ -5,14 +5,19 @@ The harness calls ``run(question, tools)`` once per question and expects
 
 Strategy: a decompose-then-chain agent (IRCoT / ReAct style) sized for 5 searches + 6 LLM calls.
 
-  1. plan    One LLM call splits the question into Q1 and Q2, where Q2 refers to Q1's answer as "#1".
+  1. plan    One LLM call splits the question into Q1 and Q2, where Q2 refers to Q1's answer as "#1"
+             (a second, firmer call only if the first reply cannot be parsed).
   2. loop    Search, then ``read`` the current hop: the LLM names the passage that answers the
              sub-question and the short answer. Hop 1's answer (the bridge entity) is substituted into
              Q2, so every hop-2 query depends on what hop 1 retrieved. Each hop issues two complementary
-             queries whose result lists are fused (reciprocal rank fusion) before reading. A failed read
-             triggers a reformulated search, and the retry asks for a best guess instead of "unknown".
-  3. answer  Hop 2's answer, citing the bridge passage and the answer passage (gold evidence for a
-             2-hop question is exactly two paragraphs).
+             k=10 queries whose result lists are fused by reciprocal rank. A failed read triggers a new
+             search; the retry read shows the passages not seen yet first and asks for a best guess
+             instead of "unknown".
+  3. answer  Hop 2's answer (never a refusal or a sentence when a real candidate exists), citing the
+             bridge passage and the answer passage (gold evidence for a 2-hop question is exactly two
+             paragraphs). Citations are chosen after all searches, from every retrieved passage.
+
+Typical cost: 4 searches and 3-4 LLM calls (at most 5 and 6). Prompts stay under the 3,000-token limit.
 """
 
 import re
@@ -23,15 +28,15 @@ from a4 import BudgetExhausted, LLMError, PromptTooLong, Passage
 # ------------------------------------------------------------------------------------------------------
 # Tunable constants
 # ------------------------------------------------------------------------------------------------------
-K = 10                     # passages per search (the maximum)
-READ_PASSAGES = (10, 15)   # passages shown when reading hop 1 / hop 2
+K = 10                     # passages per search (the maximum): searches are scarce, so each returns all it can
+READ_PASSAGES = (10, 12)   # passages shown when reading hop 1 / hop 2 (hop 2 fuses two broad searches)
 PASSAGE_CHARS = 1200       # long paragraphs are cut to this many characters in prompts
-PROMPT_CHAR_BUDGET = 9000  # ~2,600 tokens: margin under the 3,000-token limit
-RRF_C = 3                  # reciprocal rank fusion constant: score = sum 1 / (RRF_C + rank)
+RRF_C = 3                  # reciprocal rank fusion: score = sum over the hop's queries of 1 / (RRF_C + rank)
+PROMPT_CHAR_BUDGET = 9000  # ~2,300 tokens at the measured ~0.25 tokens/char: margin under the 3,000 limit
 MIN_SECONDS_FOR_RETRY = 15 # do not start an optional retry with less wall-clock time than this
-MAX_ANSWER_WORDS = 10      # longer outputs are sentences, not answers
 UNKNOWN = "unknown"
-READ_STYLE = "plain"       # "plain": passage + answer; "evidence": also quote the supporting sentence
+W_PREFER, W_CITED = 2, 1   # citation choice: weight of "fits the hop" vs "the LLM named it"
+MAX_ANSWER_WORDS = 10      # a longer final output is a sentence or a refusal, not an answer
 
 
 # ======================================================================================================
@@ -50,8 +55,9 @@ class Notes:
         self.hop = 0                            # hop currently being resolved
         self.attempts = [0, 0]                  # failed reads per hop
         self.answers = ["", ""]                 # answer of each hop ("" = not resolved yet)
-        self.answer_docs = [None, None]         # doc_id supporting each hop's answer
-        self.guesses: list[str] = []            # answers rejected or produced as best guesses
+        self.rejected: list[str] = []           # hop-2 answers rejected because they repeat the bridge
+        self.cited: list = [None, None]         # passage the LLM named for each hop's answer
+        self.shown: set[str] = set()            # doc_ids already shown in a read of the current hop
 
     def add(self, query: str, passages: list[Passage]) -> None:
         self.queries.append(query)
@@ -61,8 +67,8 @@ class Notes:
             self.passages.setdefault(p.doc_id, p)
 
     def ranked(self, hop: int) -> list[Passage]:
-        """All passages, those retrieved for ``hop`` first. Within a hop, the result lists of its queries
-        are fused by reciprocal rank, so a passage found by several queries rises to the top."""
+        """All passages, those retrieved for ``hop`` first. Within a hop, the result lists of its queries are
+        fused by reciprocal rank, so a passage that several queries rank highly comes first."""
         order: list[str] = []
         for group in (hop, 1 - hop):
             score: dict[str, float] = {}
@@ -96,21 +102,21 @@ def mentions(p: Passage, phrase: str) -> bool:
 
 
 def is_unknown(ans: str) -> bool:
-    """True for empty answers, refusals and sentence-like outputs that cannot be a short answer."""
+    """True for empty answers, refusals and sentence-like replies, which cannot be a short answer."""
     a = norm(ans)
     return not a or len(a.split()) > MAX_ANSWER_WORDS or a in {UNKNOWN, "none", "n/a", "na", "no answer"} \
-        or a.startswith(("unknown", "not mentioned", "not stated", "not given", "not specified", "passages",
+        or a.startswith(("unknown", "not mentioned", "not stated", "not given", "not specified", "not provided",
                          "passage", "there is no", "cannot be determined", "no information", "none of"))
 
 
 def clean_answer(text: str) -> str:
-    """Strip prefixes, quotes, markdown, passage references, a trailing parenthetical (an acronym or a
-    note) and trailing punctuation from an answer."""
+    """Strip prefixes, quotes, markdown, passage references and trailing punctuation from an answer."""
     line = text.strip().split("\n")[0].strip()
     line = re.sub(r"^(final answer|answer)\s*[:\-]\s*", "", line, flags=re.I)
     line = re.sub(r"^the answer is\s+", "", line, flags=re.I)
     line = re.sub(r"\s*\[\d+\]\s*", " ", line)          # stray passage references like "[3]"
-    line = re.sub(r"\s*\([^)]*\)\s*$", "", line)       # "Drug Enforcement Administration (DEA)"
+    line = re.sub(r"\s*\((passage|see)[^)]*\)", "", line, flags=re.I)
+    line = re.sub(r"\s*\([A-Z][A-Z.&]{1,9}\)$", "", line)  # trailing acronym: "Drug ... (DEA)"
     return line.strip(" .\"'*`").strip()
 
 
@@ -138,29 +144,52 @@ def call_llm(tools, build_prompt, passages: list[Passage], max_tokens: int, limi
 # ======================================================================================================
 # Plan: split the question into two single-hop sub-questions (1 LLM call)
 # ======================================================================================================
-PLAN_PROMPT = """Every question below needs two lookups: first find a hidden entity, then ask about it. \
-Rewrite the question as two simple questions. Q1 finds the hidden entity. Q2 asks the rest of the \
-question about it and refers to Q1's answer as #1. Always write both lines.
+PLAN_PROMPT = """Split the question into two simple questions. The second question must refer to the answer \
+of the first one as #1.
 
 Question: Who is the spouse of the Green performer?
 Q1: Who is the performer of Green?
 Q2: Who is the spouse of #1?
 
+Question: When was the institute that owned The Collegian founded?
+Q1: Which institute owned The Collegian?
+Q2: When was #1 founded?
+
+Question: What county contains the city where Walter Robinson was born?
+Q1: In which city was Walter Robinson born?
+Q2: Which county contains #1?
+
+Question: Who founded the record label of the performer of Me and My Monkey?
+Q1: Who is the performer of Me and My Monkey?
+Q2: Who founded the record label of #1?
+
+Question: {question}
+"""
+
+# Used only when the first plan cannot be parsed: a firmer instruction and two more question shapes.
+PLAN_RETRY_PROMPT = """Every question below needs two lookups: first find a hidden entity, then ask about it. \
+Split the question into two simple questions. Q1 finds the hidden entity. Q2 asks the rest of the question \
+about it and refers to Q1's answer as #1. Always write both lines.
+
+Question: Who is the spouse of the Green performer?
+Q1: Who is the performer of Green?
+Q2: Who is the spouse of #1?
+
+Question: When was the institute that owned The Collegian founded?
+Q1: Which institute owned The Collegian?
+Q2: When was #1 founded?
+
+Question: What county contains the city where Walter Robinson was born?
+Q1: In which city was Walter Robinson born?
+Q2: Which county contains #1?
+
+Question: Who founded the record label of the performer of Me and My Monkey?
+Q1: Who is the performer of Me and My Monkey?
+Q2: Who founded the record label of #1?
+
 Question: When did Mark Ellison's team last win the championship?
 Q1: Which team did Mark Ellison play for?
 Q2: When did #1 last win the championship?
-
-Question: What is the population of the city where WQRT is licensed?
-Q1: In which city is WQRT licensed?
-Q2: What is the population of #1?
-
-Question: Which county borders the county that contains Lake Arden?
-Q1: Which county contains Lake Arden?
-Q2: Which county borders #1?
-
-Question: In what year did the company that published Star Runner release its first console?
-Q1: Which company published Star Runner?
-Q2: In what year did #1 release its first console?
 
 Question: What language was spoken in the region where the oldest recorded strike took place?
 Q1: In which region did the oldest recorded strike take place?
@@ -171,11 +200,16 @@ Question: {question}
 
 
 def plan(question: str, notes: Notes, tools) -> None:
-    out = tools.llm(PLAN_PROMPT.format(question=question), max_tokens=80)
-    q1 = re.search(r"Q1\s*:\s*(.+)", out)
-    q2 = re.search(r"Q2\s*:\s*(.+)", out)
-    if q1 and q2 and "#1" in q2.group(1):
-        notes.subqs = [q1.group(1).strip(), q2.group(1).strip()]
+    """Split the question into Q1 and Q2 ("#1" = Q1's answer). If the reply cannot be parsed (the model
+    sometimes says the question cannot be split), ask once more with a firmer prompt; if that fails too,
+    both hops use the original question."""
+    for prompt in (PLAN_PROMPT, PLAN_RETRY_PROMPT):
+        out = tools.llm(prompt.format(question=question), max_tokens=80)
+        q1 = re.search(r"Q1\s*:\s*(.+)", out)
+        q2 = re.search(r"Q2\s*:\s*(.+)", out)
+        if q1 and q2 and "#1" in q2.group(1):
+            notes.subqs = [q1.group(1).strip(), q2.group(1).strip()]
+            break
     notes.thoughts.append(f"plan: Q1={notes.subqs[0]!r} Q2={notes.subqs[1]!r}")
 
 
@@ -191,56 +225,76 @@ Question: {subq}
 {instruction}
 Reply in exactly this format:
 Passage: <the number of the passage that answers the question>
-{evidence}Answer: <the shortest exact answer span: a name, place, date or number - not a sentence>"""
+Answer: <the shortest exact answer span: a name, place, date or number - not a sentence>"""
 
-EVIDENCE_LINE = "Evidence: <the words of that passage that state the answer>\n"
 STRICT = 'If no passage answers the question, reply "Passage: none" and "Answer: unknown".'
 GUESS = "If the passages are not explicit, use your own knowledge and give your best guess; never reply unknown."
 
 
 def read(question: str, notes: Notes, tools) -> None:
     """Ask the LLM to answer the current hop. On success, store the answer and its supporting passage and
-    move on to the next hop; on failure, count the attempt so that the next round searches again and the
+    move on to the next hop; on failure, count the attempt so that the next round searches deeper and the
     next read asks for a best guess."""
     hop = notes.hop
     subq = notes.current_question()
     context = f"(This is one step towards answering: {question})" if hop == 0 else \
         f"(Main question: {question} We already know that #1 = {notes.answers[0]}.)"
     last_chance = notes.attempts[hop] >= 1 or tools.budget_left()["llm_calls"] <= 2
-    candidates = notes.ranked(hop)
-    evidence = EVIDENCE_LINE if READ_STYLE == "evidence" else ""
+    candidates = retry_order(notes.ranked(hop), notes.shown, READ_PASSAGES[hop])
     out, shown = call_llm(
         tools,
-        lambda block: READ_PROMPT.format(context=context, passages=block, subq=subq, evidence=evidence,
+        lambda block: READ_PROMPT.format(context=context, passages=block, subq=subq,
                                          instruction=GUESS if last_chance else STRICT),
-        candidates, max_tokens=96 if evidence else 48, limit=READ_PASSAGES[hop])
+        candidates, max_tokens=48, limit=READ_PASSAGES[hop])
+    notes.shown.update(p.doc_id for p in shown)
     ans_m = re.search(r"Answer\s*:\s*(.+)", out)
-    ans = clean_answer(ans_m.group(1)) if ans_m else ""
+    ans = clean_answer(ans_m.group(1) if ans_m else out)
     notes.thoughts.append(f"read hop {hop + 1}: {subq!r} -> {ans!r}")
     if is_unknown(ans) or (hop == 1 and norm(ans) == norm(notes.answers[0])):
         notes.attempts[hop] += 1
         if not is_unknown(ans):
-            notes.guesses.append(ans)
+            notes.rejected.append(ans)
         return
     num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
     cited = shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
     notes.answers[hop] = ans
-    notes.answer_docs[hop] = supporting_doc(ans, cited, candidates, avoid=notes.answer_docs[0])
+    notes.cited[hop] = cited
     notes.hop = 1
+    notes.shown = set()
 
 
-def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None):
-    """The doc_id that supports ``ans``: the LLM's cited passage if it really mentions the answer, else the
-    best-ranked passage that does (preferring one other than the other hop's passage), else the cite."""
-    if cited is not None and mentions(cited, ans) and cited.doc_id != avoid:
-        return cited.doc_id
+def retry_order(ranked: list[Passage], seen: set[str], limit: int) -> list[Passage]:
+    """Passage order for a read. On a retry the passages already shown did not yield an answer, so up to
+    half of the window goes to passages not seen yet; the best already-seen ones keep the other half."""
+    if not seen:
+        return ranked
+    new = [p for p in ranked if p.doc_id not in seen]
+    old = [p for p in ranked if p.doc_id in seen]
+    return new[: limit // 2] + old + new[limit // 2:]
+
+
+def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None, prefer=None):
+    """The doc_id that supports ``ans``: among the passages that mention the answer (other than the other
+    hop's passage, when possible), the best by (fits the hop's ``prefer`` test, is the LLM's cited passage,
+    rank). Falls back to the cited passage when no retrieved passage mentions the answer."""
     containing = [p for p in candidates if mentions(p, ans)]
-    for p in containing:
-        if p.doc_id != avoid:
-            return p.doc_id
-    if containing:
-        return containing[0].doc_id
-    return cited.doc_id if cited is not None else None
+    containing = [p for p in containing if p.doc_id != avoid] or containing
+    if not containing:
+        return cited.doc_id if cited is not None else None
+
+    def merit(item):
+        rank, p = item
+        is_cited = cited is not None and p.doc_id == cited.doc_id
+        return (W_PREFER * bool(prefer and prefer(p)) + W_CITED * is_cited, -rank)
+
+    return max(enumerate(containing), key=merit)[1].doc_id
+
+
+def title_in(p: Passage, question: str) -> bool:
+    """True if the passage's title (without a "(disambiguation)" suffix) is named in the question: such a
+    passage is the article about the question's topic entity, where hop 1's fact usually lives."""
+    title = norm(re.sub(r"\s*\([^)]*\)\s*$", "", p.title))
+    return bool(title) and f" {title} " in f" {norm(question)} "
 
 
 # ======================================================================================================
@@ -249,25 +303,27 @@ def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None):
 def next_query(question: str, notes: Notes, tools) -> list[tuple[str, int]]:
     """Return the next searches as (query, k) pairs, based on what the reads have established so far.
 
-    * Hop 2 just started: Q2 with the bridge entity filled in ("Who is the spouse of Steve Hillage?"),
-                          plus the bridge entity followed by the original question, whose extra words
-                          match paragraphs that state the fact without repeating Q2's wording.
-    * A read just failed: hop 2 - the bridge entity on its own, which retrieves the bridge's own article;
-                          otherwise the current sub-question plus the title of the best-ranked retrieved
-                          passage not yet used in a query (a candidate bridge / topic entity).
+    * Hop 2 just started: Q2 with the bridge entity filled in ("spouse Steve Hillage"), plus the bridge
+                          entity followed by the original question, whose extra words match paragraphs that
+                          state the fact without repeating Q2's wording. Question words are dropped: they
+                          match nothing useful in BM25.
+    * Hop 2 read failed:  the bridge entity on its own, which retrieves the bridge's own article.
+    * Otherwise:          the title of the best-ranked retrieved passage not yet used in a query (a candidate
+                          bridge / topic entity) plus the question's keywords. Each retry takes the next
+                          title, so a query is never repeated verbatim.
     """
     subq = notes.current_question()
     bridge = notes.answers[0]
     if notes.hop == 1 and notes.attempts[1] == 0:
-        if subq in notes.queries:  # planning failed (Q2 is the original question): anchor on the bridge
-            subq = f"{bridge} {subq}"
-        return [(subq, K), (f"{bridge} {question}", K)]
+        if "#1" not in notes.subqs[1]:  # planning failed: Q2 is the original question, so anchor on the bridge
+            return [(f"{bridge} {keywords(question)}", K), (bridge, K)]
+        return [(keywords(subq), K), (f"{bridge} {keywords(question)}", K)]
     if notes.hop == 1 and bridge not in notes.queries:
         return [(bridge, K)]
     used = " ".join(notes.queries)
     for p in notes.ranked(notes.hop):
         if p.title not in used:
-            return [(f"{p.title} {subq}", K)]
+            return [(f"{p.title} {keywords(question)}", K)]
     return [(f"{subq} {question}", K)]
 
 
@@ -277,6 +333,15 @@ def first_queries(question: str, notes: Notes) -> list[tuple[str, int]]:
     if norm(notes.subqs[0]) == norm(question):  # planning failed: a single search
         return [(question, K)]
     return [(notes.subqs[0], K), (question, K)]
+
+
+QUESTION_WORDS = re.compile(r"\b(what|which|who|whom|whose|when|where|why|how|is|are|was|were|did|does|do)\b",
+                            re.I)
+
+
+def keywords(query: str) -> str:
+    """The query without question words and punctuation (BM25 drops only a few stopwords itself)."""
+    return " ".join(QUESTION_WORDS.sub(" ", query).replace("?", " ").split())
 
 
 # ======================================================================================================
@@ -306,7 +371,11 @@ Answer:"""
 
 def answer(question: str, notes: Notes, tools) -> dict:
     """Return hop 2's answer if the chain was completed; otherwise make one forced best-guess call over all
-    evidence (with the bridge entity as a hint). Cite the bridge passage and the answer passage."""
+    evidence (with the bridge entity as a hint). Cite the bridge passage and the answer passage.
+
+    A sentence or a refusal is never preferred over a real candidate: the fallbacks are a hop-2 answer that
+    was rejected for repeating the bridge, then the sentence itself (it may still overlap the gold answer),
+    then the bridge entity."""
     final = notes.answers[1]
     if not final:
         hint = f"Hint: {notes.subqs[0]} {notes.answers[0]}" if notes.answers[0] else ""
@@ -315,29 +384,47 @@ def answer(question: str, notes: Notes, tools) -> dict:
                                                                            question=question),
                                   notes.ranked(1), max_tokens=32, limit=READ_PASSAGES[1])
             final = clean_answer(out)
-            if is_unknown(final):
-                final = ""
-            else:
-                notes.answer_docs[1] = supporting_doc(final, None, shown, avoid=notes.answer_docs[0])
         except (BudgetExhausted, PromptTooLong, LLMError):
             pass
-    if not final:  # nothing usable: a rejected guess, else the bridge entity, is our only candidate
-        final = (notes.guesses or [notes.answers[0]])[-1]
-    return {"answer": final, "citations": citations(notes)}
+    if not usable(final):
+        sentence = final if final and not is_unknown(final) else ""
+        final = (notes.rejected or [sentence or notes.answers[0]])[-1]
+    return {"answer": final, "citations": citations(question, final, notes)}
 
 
-def citations(notes: Notes) -> list[str]:
-    """Bridge passage + answer passage (the two gold paragraphs of a 2-hop question). A missing slot is
-    filled with the top-ranked passage of that hop, so we cite two documents whenever we have them."""
-    cits = [d for d in notes.answer_docs if d]
+def usable(ans: str) -> bool:
+    """A short answer, not a refusal or a sentence."""
+    return bool(ans) and not is_unknown(ans) and len(ans.split()) <= MAX_ANSWER_WORDS
+
+
+def citations(question: str, final: str, notes: Notes) -> list[str]:
+    """Bridge passage + answer passage (the two gold paragraphs of a 2-hop question), chosen once all
+    searches are done, so a passage retrieved after a hop was read can still be cited.
+
+    * bridge passage: mentions the bridge entity; preferably the article on the question's topic entity.
+    * answer passage: mentions the final answer; preferably also the bridge entity.
+    A slot with no candidate is filled with the top-ranked passage of that hop, so we cite two documents
+    whenever we have them."""
+    bridge = notes.answers[0]
+    cits = []
+    if bridge:
+        cits.append(supporting_doc(bridge, notes.cited[0], notes.ranked(0),
+                                   prefer=lambda p: title_in(p, question)))
+    if final and final != bridge:
+        cits.append(supporting_doc(final, notes.cited[1], notes.ranked(1), avoid=cits[0] if cits else None,
+                                   prefer=lambda p: bool(bridge) and mentions(p, bridge)))
+    cits = list(dict.fromkeys(d for d in cits if d))
     for hop in (0, 1):
         if len(cits) >= 2:
             break
-        for p in notes.ranked(hop):
+        pool = notes.ranked(hop)
+        if hop == 0:  # the topic entity's own article is the likeliest hop-1 paragraph
+            pool = [p for p in pool if title_in(p, question)] + pool
+        for p in pool:
             if p.doc_id not in cits:
                 cits.append(p.doc_id)
                 break
-    return list(dict.fromkeys(cits))[:2]
+    return cits[:2]
 
 
 # ======================================================================================================
