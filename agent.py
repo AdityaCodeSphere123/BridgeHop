@@ -11,8 +11,9 @@ Strategy: a decompose-then-chain agent (IRCoT / ReAct style) sized for 5 searche
              Q2, so every hop-2 query depends on what hop 1 retrieved. Searches are cheap and LLM calls
              scarce, so each hop issues two complementary queries. A failed read triggers a deeper,
              reformulated search, and the retry asks for a best guess instead of "unknown".
-  3. answer  Hop 2's answer, citing the bridge passage and the answer passage (gold evidence for a
-             2-hop question is exactly two paragraphs).
+  3. answer  Hop 2's answer (never a refusal or a sentence when a real candidate exists), citing the
+             bridge passage and the answer passage (gold evidence for a 2-hop question is exactly two
+             paragraphs). Citations are chosen after all searches, from every retrieved passage.
 
 Typical cost: 4 searches and 3 LLM calls (at most 5 and 6). Prompts stay under the 3,000-token limit.
 """
@@ -33,6 +34,8 @@ PASSAGE_CHARS = 1400       # long paragraphs are cut to this many characters in 
 PROMPT_CHAR_BUDGET = 9000  # ~2,500 tokens at ~3.6 chars/token: margin under the 3,000-token limit
 MIN_SECONDS_FOR_RETRY = 15 # do not start an optional retry with less wall-clock time than this
 UNKNOWN = "unknown"
+W_PREFER, W_CITED = 2, 1   # citation choice: weight of "fits the hop" vs "the LLM named it"
+MAX_ANSWER_WORDS = 10      # a longer final output is a sentence or a refusal, not an answer
 
 
 # ======================================================================================================
@@ -51,7 +54,8 @@ class Notes:
         self.hop = 0                            # hop currently being resolved
         self.attempts = [0, 0]                  # failed reads per hop
         self.answers = ["", ""]                 # answer of each hop ("" = not resolved yet)
-        self.answer_docs = [None, None]         # doc_id supporting each hop's answer
+        self.rejected: list[str] = []           # hop-2 answers rejected because they repeat the bridge
+        self.cited: list = [None, None]         # passage the LLM named for each hop's answer
 
     def add(self, query: str, passages: list[Passage]) -> None:
         self.queries.append(query)
@@ -108,6 +112,7 @@ def clean_answer(text: str) -> str:
     line = re.sub(r"^the answer is\s+", "", line, flags=re.I)
     line = re.sub(r"\s*\[\d+\]\s*", " ", line)          # stray passage references like "[3]"
     line = re.sub(r"\s*\((passage|see)[^)]*\)", "", line, flags=re.I)
+    line = re.sub(r"\s*\([A-Z][A-Z.&]{1,9}\)$", "", line)  # trailing acronym: "Drug ... (DEA)"
     return line.strip(" .\"'*`").strip()
 
 
@@ -205,26 +210,38 @@ def read(question: str, notes: Notes, tools) -> None:
     notes.thoughts.append(f"read hop {hop + 1}: {subq!r} -> {ans!r}")
     if is_unknown(ans) or (hop == 1 and norm(ans) == norm(notes.answers[0])):
         notes.attempts[hop] += 1
+        if not is_unknown(ans):
+            notes.rejected.append(ans)
         return
     num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
     cited = shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
     notes.answers[hop] = ans
-    notes.answer_docs[hop] = supporting_doc(ans, cited, candidates, avoid=notes.answer_docs[0])
+    notes.cited[hop] = cited
     notes.hop = 1
 
 
-def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None):
-    """The doc_id that supports ``ans``: the LLM's cited passage if it really mentions the answer, else the
-    best-ranked passage that does (preferring one other than the other hop's passage), else the cite."""
-    if cited is not None and mentions(cited, ans) and cited.doc_id != avoid:
-        return cited.doc_id
+def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None, prefer=None):
+    """The doc_id that supports ``ans``: among the passages that mention the answer (other than the other
+    hop's passage, when possible), the best by (fits the hop's ``prefer`` test, is the LLM's cited passage,
+    rank). Falls back to the cited passage when no retrieved passage mentions the answer."""
     containing = [p for p in candidates if mentions(p, ans)]
-    for p in containing:
-        if p.doc_id != avoid:
-            return p.doc_id
-    if containing:
-        return containing[0].doc_id
-    return cited.doc_id if cited is not None else None
+    containing = [p for p in containing if p.doc_id != avoid] or containing
+    if not containing:
+        return cited.doc_id if cited is not None else None
+
+    def merit(item):
+        rank, p = item
+        is_cited = cited is not None and p.doc_id == cited.doc_id
+        return (W_PREFER * bool(prefer and prefer(p)) + W_CITED * is_cited, -rank)
+
+    return max(enumerate(containing), key=merit)[1].doc_id
+
+
+def title_in(p: Passage, question: str) -> bool:
+    """True if the passage's title (without a "(disambiguation)" suffix) is named in the question: such a
+    passage is the article about the question's topic entity, where hop 1's fact usually lives."""
+    title = norm(re.sub(r"\s*\([^)]*\)\s*$", "", p.title))
+    return bool(title) and f" {title} " in f" {norm(question)} "
 
 
 # ======================================================================================================
@@ -287,7 +304,11 @@ Answer:"""
 
 def answer(question: str, notes: Notes, tools) -> dict:
     """Return hop 2's answer if the chain was completed; otherwise make one forced best-guess call over all
-    evidence (with the bridge entity as a hint). Cite the bridge passage and the answer passage."""
+    evidence (with the bridge entity as a hint). Cite the bridge passage and the answer passage.
+
+    A sentence or a refusal is never preferred over a real candidate: the fallbacks are a hop-2 answer that
+    was rejected for repeating the bridge, then the sentence itself (it may still overlap the gold answer),
+    then the bridge entity."""
     final = notes.answers[1]
     if not final:
         hint = f"Hint: {notes.subqs[0]} {notes.answers[0]}" if notes.answers[0] else ""
@@ -296,24 +317,47 @@ def answer(question: str, notes: Notes, tools) -> dict:
                                                                            question=question),
                                   notes.ranked(1), max_tokens=32)
             final = clean_answer(out)
-            notes.answer_docs[1] = supporting_doc(final, None, shown, avoid=notes.answer_docs[0])
         except (BudgetExhausted, PromptTooLong, LLMError):
-            final = notes.answers[0]  # nothing better left: the bridge entity is our only candidate
-    return {"answer": final, "citations": citations(notes)}
+            pass
+    if not usable(final):
+        sentence = final if final and not is_unknown(final) else ""
+        final = (notes.rejected or [sentence or notes.answers[0]])[-1]
+    return {"answer": final, "citations": citations(question, final, notes)}
 
 
-def citations(notes: Notes) -> list[str]:
-    """Bridge passage + answer passage (the two gold paragraphs of a 2-hop question). A missing slot is
-    filled with the top-ranked passage of that hop, so we cite two documents whenever we have them."""
-    cits = [d for d in notes.answer_docs if d]
+def usable(ans: str) -> bool:
+    """A short answer, not a refusal or a sentence."""
+    return bool(ans) and not is_unknown(ans) and len(ans.split()) <= MAX_ANSWER_WORDS
+
+
+def citations(question: str, final: str, notes: Notes) -> list[str]:
+    """Bridge passage + answer passage (the two gold paragraphs of a 2-hop question), chosen once all
+    searches are done, so a passage retrieved after a hop was read can still be cited.
+
+    * bridge passage: mentions the bridge entity; preferably the article on the question's topic entity.
+    * answer passage: mentions the final answer; preferably also the bridge entity.
+    A slot with no candidate is filled with the top-ranked passage of that hop, so we cite two documents
+    whenever we have them."""
+    bridge = notes.answers[0]
+    cits = []
+    if bridge:
+        cits.append(supporting_doc(bridge, notes.cited[0], notes.ranked(0),
+                                   prefer=lambda p: title_in(p, question)))
+    if final and final != bridge:
+        cits.append(supporting_doc(final, notes.cited[1], notes.ranked(1), avoid=cits[0] if cits else None,
+                                   prefer=lambda p: bool(bridge) and mentions(p, bridge)))
+    cits = list(dict.fromkeys(d for d in cits if d))
     for hop in (0, 1):
         if len(cits) >= 2:
             break
-        for p in notes.ranked(hop):
+        pool = notes.ranked(hop)
+        if hop == 0:  # the topic entity's own article is the likeliest hop-1 paragraph
+            pool = [p for p in pool if title_in(p, question)] + pool
+        for p in pool:
             if p.doc_id not in cits:
                 cits.append(p.doc_id)
                 break
-    return list(dict.fromkeys(cits))[:2]
+    return cits[:2]
 
 
 # ======================================================================================================
