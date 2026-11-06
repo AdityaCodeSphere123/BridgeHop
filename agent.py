@@ -35,6 +35,7 @@ RRF_C = 3                  # reciprocal rank fusion: score = sum over the hop's 
 PROMPT_CHAR_BUDGET = 9000  # ~2,300 tokens at the measured ~0.25 tokens/char: margin under the 3,000 limit
 MIN_SECONDS_FOR_RETRY = 15 # do not start an optional retry with less wall-clock time than this
 UNKNOWN = "unknown"
+PLAN_MAX_OVERLAP = 0.9     # a Q1 containing this share of the question's content words just restates it
 W_PREFER, W_CITED = 2, 1   # citation choice: weight of "fits the hop" vs "the LLM named it"
 MAX_ANSWER_WORDS = 10      # a longer final output is a sentence or a refusal, not an answer
 
@@ -166,49 +167,75 @@ Q2: Who founded the record label of #1?
 Question: {question}
 """
 
-# Used only when the first plan cannot be parsed: a firmer instruction and two more question shapes.
-PLAN_RETRY_PROMPT = """Every question below needs two lookups: first find a hidden entity, then ask about it. \
-Split the question into two simple questions. Q1 finds the hidden entity. Q2 asks the rest of the question \
-about it and refers to Q1's answer as #1. Always write both lines.
+# Used when the first plan is unusable (no "#1" in Q2, or Q1 just restates the question). Naming the hidden
+# entity first makes the model separate the two lookups; the examples cover the most common nested shapes.
+PLAN_RETRY_PROMPT = """Each question hides one unnamed entity, described by a phrase like "the birthplace \
+of X" or "X's team". Name that phrase, then write Q1, asking only for the hidden entity, and Q2, the rest of \
+the question, with #1 for Q1's answer. Q1 must never ask the whole question.
 
-Question: Who is the spouse of the Green performer?
-Q1: Who is the performer of Green?
-Q2: Who is the spouse of #1?
+Question: How many titles did Rafe Holloway's club win?
+Hidden entity: Rafe Holloway's club
+Q1: Which club did Rafe Holloway play for?
+Q2: How many titles did #1 win?
 
-Question: When was the institute that owned The Collegian founded?
-Q1: Which institute owned The Collegian?
-Q2: When was #1 founded?
+Question: When did trams stop running in the birthplace of Edith Marlow?
+Hidden entity: the birthplace of Edith Marlow
+Q1: Where was Edith Marlow born?
+Q2: When did trams stop running in #1?
 
-Question: What county contains the city where Walter Robinson was born?
-Q1: In which city was Walter Robinson born?
-Q2: Which county contains #1?
+Question: When did the river on which Kessler Dam is located flood?
+Hidden entity: the river on which Kessler Dam is located
+Q1: On which river is Kessler Dam located?
+Q2: When did #1 flood?
 
-Question: Who founded the record label of the performer of Me and My Monkey?
-Q1: Who is the performer of Me and My Monkey?
-Q2: Who founded the record label of #1?
+Question: In which county of the state where The Quiet Harvest is set is Brookfield?
+Hidden entity: the state where The Quiet Harvest is set
+Q1: In which state is The Quiet Harvest set?
+Q2: In which county of #1 is Brookfield?
 
-Question: When did Mark Ellison's team last win the championship?
-Q1: Which team did Mark Ellison play for?
-Q2: When did #1 last win the championship?
+Question: When did the network that aired Sunday Garden stop showing cartoons?
+Hidden entity: the network that aired Sunday Garden
+Q1: Which network aired Sunday Garden?
+Q2: When did #1 stop showing cartoons?
 
-Question: What language was spoken in the region where the oldest recorded strike took place?
-Q1: In which region did the oldest recorded strike take place?
-Q2: What language was spoken in #1?
+Question: How many hits did the original singer of Paper Lantern have?
+Hidden entity: the original singer of Paper Lantern
+Q1: Who was the original singer of Paper Lantern?
+Q2: How many hits did #1 have?
 
 Question: {question}
 """
 
+PLAN_STOPWORDS = frozenset("a an the of in on at to for by with from and or is was were are did do does "
+                           "what which who whom whose when where why how".split())
+
+
+def content_words(text: str) -> set[str]:
+    return {w for w in norm(text).split() if w not in PLAN_STOPWORDS}
+
+
+def parse_plan(out: str, question: str):
+    """(Q1, Q2) if the reply is a usable plan, else None. A plan is unusable when Q2 does not refer to #1, or
+    when Q1 restates (nearly) the whole question - then hop 1 would try to answer the final question."""
+    q1 = re.search(r"Q1\s*:\s*(.+)", out)
+    q2 = re.search(r"Q2\s*:\s*(.+)", out)
+    if not (q1 and q2 and "#1" in q2.group(1)):
+        return None
+    q1, q2 = q1.group(1).strip(), q2.group(1).strip()
+    asked = content_words(question)
+    if asked and len(content_words(q1) & asked) >= PLAN_MAX_OVERLAP * len(asked):
+        return None
+    return q1, q2
+
 
 def plan(question: str, notes: Notes, tools) -> None:
-    """Split the question into Q1 and Q2 ("#1" = Q1's answer). If the reply cannot be parsed (the model
-    sometimes says the question cannot be split), ask once more with a firmer prompt; if that fails too,
-    both hops use the original question."""
+    """Split the question into Q1 and Q2 ("#1" = Q1's answer). If the first reply is unusable, ask once more
+    with a prompt that makes the model name the hidden entity first; if that fails too, both hops use the
+    original question."""
     for prompt in (PLAN_PROMPT, PLAN_RETRY_PROMPT):
-        out = tools.llm(prompt.format(question=question), max_tokens=80)
-        q1 = re.search(r"Q1\s*:\s*(.+)", out)
-        q2 = re.search(r"Q2\s*:\s*(.+)", out)
-        if q1 and q2 and "#1" in q2.group(1):
-            notes.subqs = [q1.group(1).strip(), q2.group(1).strip()]
+        parsed = parse_plan(tools.llm(prompt.format(question=question), max_tokens=80), question)
+        if parsed:
+            notes.subqs = list(parsed)
             break
     notes.thoughts.append(f"plan: Q1={notes.subqs[0]!r} Q2={notes.subqs[1]!r}")
 
@@ -240,7 +267,7 @@ def read(question: str, notes: Notes, tools) -> None:
     context = f"(This is one step towards answering: {question})" if hop == 0 else \
         f"(Main question: {question} We already know that #1 = {notes.answers[0]}.)"
     last_chance = notes.attempts[hop] >= 1 or tools.budget_left()["llm_calls"] <= 2
-    candidates = retry_order(notes.ranked(hop), notes.shown, READ_PASSAGES[hop])
+    candidates = retry_order(notes.ranked(hop), notes.shown)
     out, shown = call_llm(
         tools,
         lambda block: READ_PROMPT.format(context=context, passages=block, subq=subq,
@@ -263,14 +290,17 @@ def read(question: str, notes: Notes, tools) -> None:
     notes.shown = set()
 
 
-def retry_order(ranked: list[Passage], seen: set[str], limit: int) -> list[Passage]:
-    """Passage order for a read. On a retry the passages already shown did not yield an answer, so up to
-    half of the window goes to passages not seen yet; the best already-seen ones keep the other half."""
+def retry_order(ranked: list[Passage], seen: set[str]) -> list[Passage]:
+    """Passage order for a read. On a retry the passages already shown did not yield an answer, so passages
+    not seen yet are interleaved with them; the best already-seen passage stays first, because the model
+    reads the first passages most reliably."""
     if not seen:
         return ranked
     new = [p for p in ranked if p.doc_id not in seen]
     old = [p for p in ranked if p.doc_id in seen]
-    return new[: limit // 2] + old + new[limit // 2:]
+    mixed = [p for pair in zip(old, new) for p in pair]
+    n = min(len(old), len(new))
+    return mixed + old[n:] + new[n:]
 
 
 def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None, prefer=None):
