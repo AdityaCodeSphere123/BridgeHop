@@ -1,83 +1,303 @@
-% COL764 A4 report - at most 2 pages. Compile: pdflatex report.tex  (or upload to Overleaf), then copy
-% report.pdf to the repository root so that make_submission.py picks it up.
-% Every TODO must be replaced with numbers from your own runs (dev/compare.py, dev/analyze.py).
 \documentclass[10pt,a4paper]{article}
-\usepackage[margin=1.8cm]{geometry}
-\usepackage{booktabs,microtype,enumitem}
-\setlist{nosep,leftmargin=*}
-\setlength{\parskip}{3pt}\setlength{\parindent}{0pt}
 
-\title{\vspace{-1.6cm}COL764 Assignment 4: Iterative Retrieval for Multi-hop QA}
-\author{TODO Name \quad TODO Entry number}
-\date{\vspace{-0.8cm}}
+\usepackage[margin=0.62in,top=0.55in,bottom=0.62in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage[varqu]{inconsolata}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepackage{caption}
+\captionsetup{font=footnotesize,labelfont=bf,skip=2pt}
+\usepackage{graphicx}
+
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{5pt}{2pt}
+\titlespacing*{\paragraph}{0pt}{2pt}{5pt}
+\titleformat*{\section}{\large\bfseries\color{ink}}
+\setlength{\textfloatsep}{5pt}
+\setlength{\floatsep}{4pt}
+\setlength{\intextsep}{4pt}
+\setlist{nosep,leftmargin=1.1em}
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{4pt}
+\raggedbottom
+\setlength{\emergencystretch}{2em}
+
+% ---------- colours ----------
+\definecolor{ink}{HTML}{1A365D}
+\definecolor{cA}{HTML}{2B6CB0}   % blue
+\definecolor{cB}{HTML}{DD6B20}   % orange
+\definecolor{cC}{HTML}{2F855A}   % green
+\definecolor{cD}{HTML}{805AD5}   % purple
+\definecolor{cG}{HTML}{718096}   % grey
 
 \begin{document}
-\maketitle
 
-\section{Single-shot vs.\ iterative (dev set, TODO $n$ questions)}
+% ---------- Title Page ----------
+\begin{titlepage}
+\centering
+\vspace*{1.2cm}
+
+\IfFileExists{iitd.png}{{\includegraphics[width=4.2cm]{iitd.png}}}{}
+
+\vspace{1.0cm}
+
+{\huge\scshape Indian Institute of Technology Delhi\par}
+
+\vspace{0.4cm}
+
+{\Large COL764: Information Retrieval and Web Search\par}
+
+\vspace{2.2cm}
+
+{\rule{0.85\textwidth}{0.8pt}\par}
+\vspace{0.6cm}
+{\LARGE\bfseries Assignment 4: Iterative Retrieval for Multi-hop\\[4pt] Question Answering\par}
+\vspace{0.6cm}
+{\rule{0.85\textwidth}{0.8pt}\par}
+
+\vspace{2.5cm}
+
+{\Large\bfseries Instructor\par}
+\vspace{0.25cm}
+{\Large Prof.\ Srikanta Bedathur\par}
+
+\vspace{1.2cm}
+
+{\Large\bfseries Submitted by\par}
+\vspace{0.25cm}
+{\Large Aditya Anand\par}
+\vspace{0.1cm}
+{\large 2023CS50284\par}
+
+\vfill
+
+{\Large \today\par}
+
+\vspace{1cm}
+
+\end{titlepage}
+
+% =====================================================================
+\newpage
+
+\section*{Overview}
+My agent is a \textbf{decompose-then-chain} loop (IRCoT/ReAct style) sized for the budget of 5 searches and
+6 LLM calls. One LLM call splits the question into Q1 and Q2, where Q2 refers to Q1's answer (the
+\emph{bridge}) as \#1. Each hop runs two complementary BM25 searches, fuses them, and asks the LLM to name
+the passage and the short answer. The bridge is substituted into Q2, so every hop-2 query depends on what
+hop~1 found.
+
 \begin{center}
-\begin{tabular}{lcccccc}
+\begin{tikzpicture}[font=\scriptsize, node distance=0.22cm,
+  st/.style={draw=black, line width=0.4pt, align=center, text width=2.55cm, inner sep=2.5pt, minimum height=1.05cm},
+  arr/.style={-{Stealth[length=3.5pt]}, black, line width=0.5pt}]
+  \node[st, fill=cD!10] (p) {\textbf{plan} (1--2 calls)\\Q1, Q2 with \#1};
+  \node[st, fill=cA!10, right=of p] (s1) {\textbf{search hop 1}\\Q1 + question, $k{=}10$ each, RRF};
+  \node[st, fill=cC!10, right=of s1] (r1) {\textbf{read hop 1}\\10 passages\\$\Rightarrow$ bridge};
+  \node[st, fill=cA!10, right=of r1] (s2) {\textbf{search hop 2}\\Q2[\#1=bridge] + bridge\,+\,question};
+  \node[st, fill=cC!10, right=of s2] (r2) {\textbf{read hop 2}\\12 passages\\$\Rightarrow$ answer};
+  \node[st, fill=cB!10, right=of r2] (a) {\textbf{answer}\\format + cite 2 passages};
+  \foreach \u/\v in {p/s1,s1/r1,r1/s2,s2/r2,r2/a} \draw[arr] (\u) -- (\v);
+  \draw[arr, dashed, cG] (r1.south) to[out=-150,in=-30] node[below, font=\tiny]{unknown: retry search} (s1.south);
+  \draw[arr, dashed, cG] (r2.south) to[out=-150,in=-30] node[below, font=\tiny]{unknown: search bridge} (s2.south);
+\end{tikzpicture}
+\end{center}
+
+% =====================================================================
+\section{Single-shot vs.\ iterative}
+\begin{minipage}[t]{0.585\textwidth}
+\vspace{0pt}
+\centering\footnotesize
+\begin{tabular}{@{}lcccccc@{}}
 \toprule
-System & EM & Answer F1 & Evidence F1 & Searches / q & LLM calls / q & $S$ \\
+Dev set, 300 questions & EM & Ans.\ F1 & Ev.\ F1 & $S$ & Search & LLM\\
 \midrule
-% paste the LaTeX rows printed by: python dev/compare.py runs/<b1> runs/<ours> --names B1 Ours
-B1 (single-shot) & TODO & TODO & TODO & 1.00 & 1.00 & TODO \\
-Ours (iterative) & TODO & TODO & TODO & TODO & TODO & TODO \\
+B1 single-shot (starter) & 0.1400 & 0.2110 & 0.3717 & 0.2431 & 1.00 & 1.00\\
+B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.03\\
+\textbf{My agent (final)} & \textbf{0.4500} & \textbf{0.5330} & \textbf{0.6283} & \textbf{0.5521} & 4.25 & 3.69\\
 \bottomrule
 \end{tabular}
-\end{center}
-Retrieval diagnostics (from \texttt{dev/analyze.py}): both gold paragraphs are retrieved for TODO\% of
-questions (B1: TODO\%), and the agent's bridge entity matches the gold bridge for TODO\%.
+\captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search/LLM = mean calls per question.}
+\label{tab:main}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}
+\vspace{0pt}
+\centering\footnotesize
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Diagnostic & B1 & Mine\\
+\midrule
+both gold paragraphs retrieved & 15.3\% & 67.7\%\\
+hop-2 paragraph retrieved & 23.3\% & 70.7\%\\
+bridge (hop-1 answer) correct & -- & 75.0\%\\
+gold paragraphs cited (of 2) & 0.74 & 1.26\\
+\bottomrule
+\end{tabular}
+\captionof{table}{Why iterating helps (\texttt{dev/analyze.py}).}
+\end{minipage}
 
+\vspace{2pt}
+Single-shot retrieval finds the hop-2 paragraph for only 23\% of questions, because the question never names
+the bridge entity; once the bridge is known and searched for, this rises to 71\%. Every question ran in the
+harness with status \texttt{ok}; the median time per question is 2.1\,s and the maximum 8.1\,s (limit 60\,s).
+
+% =====================================================================
 \section{Design}
-\textbf{Plan and \texttt{next\_query}.} One LLM call decomposes the question into two single-hop
-sub-questions, the second referring to the first answer as \#1 (four in-context examples). Hop~1 searches
-both $Q_1$ ($k{=}6$) and the original question ($k{=}4$): the latter's extra context words often rank the
-bridge paragraph when $Q_1$ alone is too short for BM25. After hop~1 is read, the bridge entity is
-substituted into $Q_2$ and the agent issues two queries: the filled-in $Q_2$ ($k{=}6$) and the bridge
-entity on its own ($k{=}4$), which retrieves the bridge's own article, where hop-2 facts (spouse,
-birthplace, founding date, \dots) usually live. If a read fails, the next query is the current
-sub-question prefixed with the title of the best retrieved passage not yet used (a candidate bridge
-entity) at $k{=}10$, so queries always depend on earlier results and never repeat. Searches are cheap
-and LLM calls scarce, so the budget is spent on two complementary queries per hop rather than more reads.
+\textbf{\texttt{next\_query}.} Hop~1 searches Q1 and the original question ($k{=}10$ each); the full question
+adds context words when Q1 is too short for BM25. Hop~2 searches Q2 with the bridge filled in and the bridge
+followed by the question, both without question words (\emph{what, when, did}\dots), which BM25 would only match
+noisily. The lists of a hop are fused by reciprocal rank ($\sum 1/(3+\mathrm{rank})$), which lifts passages
+that both queries rank highly. With the agent's own bridges this raised hop-2 recall (gold paragraph among
+the passages shown) from 55\% to 64\%, and from 68\% to 77\% with the gold bridge. A failed hop-2 read searches the bridge alone (its own article); a failed hop-1 read
+searches the title of the best unused passage plus the question's keywords. A retry interleaves unseen passages
+with the best seen ones. \textbf{The plan} is re-asked when Q2 lacks \#1 \emph{or} Q1 restates $\ge$90\% of
+the question's content words; the retry prompt makes the model first name the hidden entity (\emph{``the
+birthplace of X''}) with six invented examples. \textbf{Reading} shows 10/12 passages; at hop~1 the article
+whose title is named in the question goes first.
 
-\textbf{\texttt{should\_stop} and \texttt{answer}.} Each round ends with one \emph{read} call that
-asks for the supporting passage number first and then the shortest answer span (evidence-first output
-grounds the 4B model). The first read of a hop may say ``unknown''; that triggers another round, whose
-read must give a best guess. The agent stops as soon as hop~2 is answered, or when only one LLM call or
-less than 15\,s remains; that last call is reserved for a forced best-guess answer over all evidence. The
-two citations are the passages that the hop-1 and hop-2 reads point to (each checked to actually contain
-its answer, else the best-ranked passage that does): gold evidence is exactly two paragraphs, so citing
-two rather than three raises evidence precision. A typical question uses TODO searches and TODO LLM calls.
+\textbf{\texttt{should\_stop}.} Stop as soon as hop~2 has an answer that is not \emph{unknown} and does not
+just repeat the bridge, or when only one LLM call is left (reserved for \texttt{answer}) or under 15\,s remain.
 
-\textbf{What did not help.} TODO (e.g.\ a free-form chain-of-thought read: longer outputs, slower, and
-answer F1 dropped from TODO to TODO because the model wrapped answers in sentences).
+\textbf{\texttt{answer}.} Hop~2's answer; if it is a refusal or a sentence, one forced best-guess call, then a
+hop-2 answer rejected for repeating the bridge, then the bridge. The scorer deletes punctuation, so hyphens are
+spaced (\emph{2001-02-13}$\to$\emph{2001 - 02 - 13}) and a hedge before a number is dropped (\emph{over 1.7
+million}). \textbf{Citations} are chosen after all searches: the passage that mentions the bridge (preferring
+the topic entity's article) and the one that mentions the answer (preferring one that also names the bridge),
+exactly two because the gold evidence is two paragraphs.
 
+\begin{minipage}[t]{0.50\textwidth}
+\vspace{0pt}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xbar, bar shift=0pt, width=4.2cm, height=4.0cm, scale only axis, bar width=6.5pt,
+  xmin=0.49, xmax=0.575, xtick={0.50,0.52,0.54,0.56},
+  xticklabel style={font=\scriptsize,/pgf/number format/fixed,/pgf/number format/precision=2},
+  yticklabel style={font=\scriptsize}, xlabel={dev $S$}, xlabel style={font=\scriptsize},
+  symbolic y coords={a,b,c,d,e,f}, ytick={a,b,c,d,e,f}, y dir=reverse,
+  yticklabels={first iterative agent, +answer fallbacks\,\&\,citations, +$k{=}10$\,/\,RRF\,/\,retries,
+    +plan check \& retry prompt, +topic article first, +output formatting},
+  enlarge y limits=0.1, xmajorgrids=true, major grid style={gray!22}, axis line style={gray!70},
+  nodes near coords, nodes near coords style={font=\scriptsize,/pgf/number format/fixed,
+    /pgf/number format/fixed zerofill,/pgf/number format/precision=4}]
+\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,c) (0.5402,d) (0.5441,e)};
+\addplot[fill=cC!45, draw=cC, line width=0.4pt] coordinates {(0.5165,b) (0.5521,f)};
+\end{axis}
+\end{tikzpicture}
+\captionof{figure}{Each change, cumulative. Blue: leaderboard. Green: exact replay of recorded server
+outputs (prompts unchanged, so the score is exact).}
+\label{fig:steps}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\textwidth}
+\vspace{0pt}
+\textbf{What the gains came from.}
+\begin{itemize}
+\item \textbf{Bad plans.} When Q1 restates the question (20 dev questions) answer F1 was 0.23, and 0.35 when
+the plan did not parse (20), vs.\ 0.53 otherwise. Given the gold passage, hop-1 reading was right 81\% of the
+time with a good plan and 12\% with a bad one.
+\item \textbf{Position.} In 303 recorded hop-1 reads that contained the gold passage, the bridge was right
+67\% of the time when that passage came first and 30\% when it came second; hence topic article first.
+\end{itemize}
+\textbf{Tried, did not help.} Asking the model to quote the evidence before the answer: $S$ fell from 0.5441
+to 0.5337. Ten instead of twelve hop-2 passages: no change (0.5446 vs.\ 0.5448 on 227 questions). A third
+citation lowered evidence F1 (0.58$\to$0.47--0.50 in simulation); moving bridge-titled passages first at hop~2 put
+the gold paragraph first less often (30\%$\to$23\%).
+\end{minipage}
+
+% =====================================================================
 \section{Error analysis}
-Ten dev questions the agent gets wrong (EM $=0$), labelled by hand (starting from the automatic labels of
-\texttt{dev/analyze.py}):
-\begin{center}
-\begin{tabular}{lc}
+Of the 300 dev questions, 165 have EM $=0$. \texttt{dev/analyze.py} labels them automatically:
+(i)~43, (ii)~21, (iii)~49, (iv)~44, (v)~8. Many (iv) cases already get partial credit, e.g.\ \emph{August 5,
+1940} vs.\ \emph{5 August 1940} has F1 1.0 but EM 0. I checked the traces of 10 wrong questions by hand
+(Table~\ref{tab:err}); my labels differ from the automatic ones only for Berthelot, which the script calls
+(iii) because both gold paragraphs were retrieved, but whose real failure is the bridge.
+
+\begin{minipage}[t]{0.47\textwidth}
+\vspace{0pt}
+\centering\footnotesize
+\begin{tabular}{@{}lccc@{}}
 \toprule
-Category & Count \\
+Errors (EM $=0$), automatic labels & B1 & first iter. & final\\
 \midrule
-(i) bridge entity not found & TODO \\
-(ii) stopped too early & TODO \\
-(iii) evidence retrieved but answered wrongly & TODO \\
-(iv) answer correct but marked wrong & TODO \\
-(v) other & TODO \\
+(i) bridge entity not found & 191 & 61 & 43\\
+(ii) stopped too early & 0 & 20 & 21\\
+(iii) evidence retrieved, answered wrongly & 15 & 36 & 49\\
+(iv) correct but marked wrong & 52 & 45 & 44\\
+(v) other & 0 & 16 & 8\\
+\midrule
+total & 258 & 178 & 165\\
 \bottomrule
 \end{tabular}
+\captionof{table}{Error categories on all 300 dev questions.}
+\label{tab:cats}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.505\textwidth}
+\vspace{0pt}
+\textbf{The bottleneck moved from retrieval to reading.} Iterating cut bridge failures (i) from 191 to 43,
+because the bridge is now searched for. Category (iii) grew from 15 to 49 for the same reason: far more
+questions now reach the final read with both gold paragraphs in the prompt (46 for B1, 203 now), and there
+the 4B reader reaches an answer F1 of only 0.70. The plan fix and the passage ordering
+attacked (i); the reading errors in (iii) are the largest remaining class.
+\end{minipage}
+
+\begin{center}
+\footnotesize\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{@{}c>{\raggedright\arraybackslash}Xp{2.3cm}p{2.6cm}p{3.9cm}@{}}
+\toprule
+& Question (shortened) & Gold & Mine & What went wrong\\
+\midrule
+(i) & Last time Auburn won in the work location of Johnny Berthelot? & 1999 & 2017 & bridge \emph{Gonzales} (hometown), not \emph{Baton Rouge}\\
+(i) & Sibling of the composer of \emph{Downtown}? & Astrid Young & Virginia & bridge \emph{Warner} (the label), not Neil Young\\
+(i) & Record label of \emph{Trouble}'s performer? & RCA Records & Motown & ambiguous title: Marvin Gaye, not Ray LaMontagne\\
+(ii) & Birth county of Norman Levinson? & Essex County & Massachusetts & bridge Lynn right; a \emph{state} accepted for ``county''\\
+(ii) & Manager when Tommy Logan's team won the Champions League? & Roberto Di Matteo & Jos\'e Mourinho & bridge Chelsea right; hop-2 paragraph never retrieved\\
+(iii) & Who is part of the band that performed \emph{English Settlement}? & Andy Partridge & XTC & Q2 became ``part of the band that performed XTC''\\
+(iii) & Where did the 2007 World Series winner get Brandon Phillips from? & Los Angeles Angels & Cincinnati Reds & right passages, wrong team read\\
+(iv) & When did Chopin's family move to the city Eisenhower visited in 1945? & October 1810 & 1810 & correct but shorter span (F1 0.67)\\
+(iv) & Country of Saldus Municipality joined the Soviet Union when? & 5 August 1940 & August 5, 1940 & same date, other order (F1 1.0, EM 0)\\
+(v) & Who was targeted for defrauding the electoral process, in Hotel Courtland's state? & a whole sentence & Senator Boxer & gold answer is a sentence; question ill-posed\\
+\bottomrule
+\end{tabularx}
+\captionof{table}{Ten hand-labelled errors: (i) bridge not found 3, (ii) stopped too early 2, (iii) evidence
+retrieved but answered wrongly 2, (iv) correct but marked wrong 2, (v) other 1.}
+\label{tab:err}
 \end{center}
-\textbf{Example 1 (TODO category).} TODO question id, question, gold vs.\ predicted answer, what the
-queries retrieved, and why it failed.
 
-\textbf{Example 2 (TODO category).} TODO.
+\textbf{Example 1 (i), Johnny Berthelot.} The plan is right (Q1: \emph{What is the work location of Johnny
+Berthelot?}) and the gold paragraph is ranked first, but it says he is \emph{a member of the Louisiana House of
+Representatives from District~88, based in his hometown of Gonzales}. The model returns the explicit city;
+the intended bridge, Baton Rouge, is only implied (the seat of the Louisiana legislature). Every later step
+then searches Auburn's results \emph{at Gonzales}, all three hop-2 reads say \emph{unknown}, and the forced
+final guess is wrong. Multi-hop errors start at the bridge: with a wrong bridge my answer F1 is 0.03 when the
+hop-2 paragraph is missing, against 0.72 with the right bridge and the paragraph found.
 
+\textbf{Example 2 (ii), Norman Levinson.} Hop~1 finds \emph{Lynn} (the passage says \emph{born in Lynn,
+Massachusetts}), and the hop-2 read answers \emph{Massachusetts}, a state, for a question about a county.
+\texttt{should\_stop} accepts any answer that is not \emph{unknown}, so the agent stops with one search and
+three LLM calls unused. Two cheap fixes follow: keep the bridge's qualifier (\emph{Lynn, Massachusetts}; a
+search for plain \emph{Lynn} returns Loretta Lynn), and check the answer type (a ``county'' question needs an
+answer naming a county) before stopping. Budget is there for it: 63\% of questions use only 3 of the 6 LLM
+calls.
+
+% =====================================================================
 \section{AI-use disclosure and code provenance}
-TODO: state honestly which tools you used and for what (e.g.\ an AI coding assistant helped draft
-\texttt{agent.py} and the analysis scripts in \texttt{dev/}; all design choices, experiments, numbers and
-this report were checked by me). The starter code (\texttt{a4/}, \texttt{run\_dev.py}, the baseline)
-is from the course repository.
+I used Claude Code (Anthropic, Claude Opus 5.5) to read the starter code, write the agent and the analysis
+scripts in \texttt{dev/}, run the experiments and draft this report. I chose what to try and what to keep and
+I checked the numbers; I am responsible for the submission. No external code was copied. The loop follows IRCoT
+(Trivedi et al., ACL 2023) and ReAct (Yao et al., ICLR 2023); reciprocal rank fusion follows Cormack, Clarke and
+Buettcher (SIGIR 2009); the data is MuSiQue (Trivedi et al., TACL 2022). BM25, the tools and the scorer are the
+course's \texttt{a4} package. The few-shot examples in the prompts are invented and appear nowhere in the
+dev set or corpus.
 
 \end{document}
