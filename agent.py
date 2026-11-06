@@ -424,6 +424,12 @@ def final_form(ans: str) -> str:
     """Format the answer for the scorer. The scorer deletes punctuation, so "2001-02-13" would become
     one word. Put spaces around hyphens so each part counts. Also drop "over", "about", ... before a
     number, because gold answers are short."""
+    ans = ans.replace("*", "").strip()
+    # "Leyton, East London" -> "Leyton": gold answers rarely add a region after a comma.
+    # Dates and numbers ("May 5, 1940", "8,491,079"), lists and abbreviations ("Washington, D.C.") stay.
+    head, sep, tail = ans.partition(", ")
+    if sep and re.match(r"[A-Za-z]", tail) and "." not in tail and not re.search(r"\b(and|or)\b|&", ans):
+        ans = head
     ans = re.sub(r"\s*[-\u2013\u2014]+\s*", " - ", ans)
     return re.sub(r"^(over|about|approximately|around|nearly|almost|more than|less than)\s+(?=\d)", "", ans,
                   flags=re.I)
