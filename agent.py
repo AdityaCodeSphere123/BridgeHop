@@ -423,7 +423,17 @@ def answer(question: str, notes: Notes, tools) -> dict:
     if not usable(final):
         sentence = final if final and not is_unknown(final) else ""
         final = (notes.rejected or [sentence or notes.answers[0]])[-1]
-    return {"answer": final, "citations": citations(question, final, notes)}
+    return {"answer": final_form(final), "citations": citations(question, final, notes)}
+
+
+def final_form(ans: str) -> str:
+    """Output formatting for the scorer, which deletes punctuation before comparing words: a hyphenated
+    "warm-summer" or "2001-02-13" would become one word that matches neither "warm - summer" nor "warm".
+    Hyphens are spaced so each part counts as a word, and a hedge before a number ("over 1.7 million") is
+    dropped, since gold answers are minimal spans."""
+    ans = re.sub(r"\s*[-\u2013\u2014]+\s*", " - ", ans)
+    return re.sub(r"^(over|about|approximately|around|nearly|almost|more than|less than)\s+(?=\d)", "", ans,
+                  flags=re.I)
 
 
 def usable(ans: str) -> bool:
