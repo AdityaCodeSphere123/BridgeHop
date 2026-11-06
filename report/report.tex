@@ -126,7 +126,7 @@ Dev set, 300 questions & EM & Ans.\ F1 & Ev.\ F1 & $S$ & Search & LLM\\
 \midrule
 B1 single-shot (starter) & 0.1400 & 0.2110 & 0.3717 & 0.2431 & 1.00 & 1.00\\
 B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.03\\
-\textbf{My agent (final, leaderboard)} & \textbf{0.4700} & \textbf{0.5484} & \textbf{0.6400} & \textbf{0.5667} & 4.27 & 4.61\\
+\textbf{My agent (final, leaderboard)} & \textbf{0.4800} & \textbf{0.5576} & \textbf{0.6483} & \textbf{0.5757} & 4.27 & 4.61\\
 \bottomrule
 \end{tabular}
 \captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search/LLM = mean calls per question.}
@@ -164,10 +164,10 @@ the question's content words; the retry prompt makes the model first name the hi
 birthplace of X''}) with six invented examples. \textbf{Reading} shows 10/12 passages; at hop~1 the article
 whose title is named in the question goes first.
 
-\textbf{Second read and judge.} The reader is sensitive to passage order, so a hop-2 answer is checked by reading
-the same passages in reverse order. If the answers differ, one call shows both with their passages and asks
-\emph{``A or B?''}; the first answer is A and wins on doubt (a B that only adds words is not judged). Needs 2 spare
-calls; on a local copy of the model it raised $S$ by 0.009 on both halves of the dev set.
+\textbf{Second read and judge.} A hop-2 answer is checked by reading the same passages in reverse order (the
+reader is sensitive to order) with the original question instead of Q2, which the plan sometimes words badly. If
+the answers really differ, one call shows both with their passages and asks \emph{``A or B?''}; the first answer is
+A and wins on doubt (a B that only extends A or is a piece of it is not judged). It added 0.018 on the leaderboard.
 
 \textbf{\texttt{should\_stop}.} Stop as soon as hop~2 has an answer that is not \emph{unknown} and does not
 just repeat the bridge, or when only one LLM call is left (reserved for \texttt{answer}) or under 15\,s remain.
@@ -185,17 +185,17 @@ London}$\to$\emph{Leyton}) and \emph{how many X} answers drop the unit (\emph{on
 \vspace{0pt}
 \centering
 \begin{tikzpicture}
-\begin{axis}[xbar, bar shift=0pt, width=4.2cm, height=3.3cm, scale only axis, bar width=5pt,
-  xmin=0.49, xmax=0.592, xtick={0.50,0.52,0.54,0.56,0.58},
+\begin{axis}[xbar, bar shift=0pt, width=4.2cm, height=3.3cm, scale only axis, bar width=4.5pt,
+  xmin=0.49, xmax=0.598, xtick={0.50,0.52,0.54,0.56,0.58},
   xticklabel style={font=\scriptsize,/pgf/number format/fixed,/pgf/number format/precision=2},
   yticklabel style={font=\scriptsize}, xlabel={dev $S$}, xlabel style={font=\scriptsize},
-  symbolic y coords={a,b,c,d,e,f,g,h}, ytick={a,b,c,d,e,f,g,h}, y dir=reverse,
+  symbolic y coords={a,b,c,d,e,f,g,h,i}, ytick={a,b,c,d,e,f,g,h,i}, y dir=reverse,
   yticklabels={first iterative agent, +answer fallbacks\,\&\,citations, +$k{=}10$\,/\,RRF\,/\,retries,
-    +plan check \& retry prompt, +topic article first, +output formatting, +clean-up \& citation words, +second read \& judge},
+    +plan check \& retry prompt, +topic article first, +output formatting, +clean-up \& citation words, +second read \& judge, +original question in judge},
   enlarge y limits=0.1, xmajorgrids=true, major grid style={gray!22}, axis line style={gray!70},
   nodes near coords, nodes near coords style={font=\scriptsize,/pgf/number format/fixed,
     /pgf/number format/fixed zerofill,/pgf/number format/precision=4}]
-\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,c) (0.5402,d) (0.5441,e) (0.5576,g) (0.5667,h)};
+\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,c) (0.5402,d) (0.5441,e) (0.5576,g) (0.5667,h) (0.5757,i)};
 \addplot[fill=cC!45, draw=cC, line width=0.4pt] coordinates {(0.5165,b) (0.5521,f)};
 \end{axis}
 \end{tikzpicture}
@@ -216,7 +216,8 @@ the plan did not parse (20), vs.\ 0.53 otherwise.
 to 0.5337. A third
 citation lowered evidence F1 (0.58$\to$0.47--0.50 in simulation); moving bridge-titled passages first at hop~2 put
 the gold paragraph first less often (30\%$\to$23\%). On a local copy of the model, 15 more variants
-(reasoning first, lenient reader, judging the bridge or retries too, judging twice with A/B swapped) lost or tied.
+(reasoning first, lenient reader, judging the bridge or retries too, judging twice, new passages for the
+second read) lost or tied.
 \end{minipage}
 
 % =====================================================================
@@ -253,7 +254,7 @@ total & 258 & 178 & 163\\
 because the bridge is now searched for. Category (iii) grew from 15 to 50 for the same reason: far more
 questions now reach the final read with both gold paragraphs in the prompt (46 for B1, 203 now), and there
 the 4B reader reaches an answer F1 of only 0.70. The plan fix and the passage ordering
-attacked (i); the judge step attacks (iii): on the local model it cut (iii) from 50 to 46 (total 162$\to$158).
+attacked (i); the judge step attacks (iii): on the local model it cut (iii) from 50 to 45 (total 162$\to$155).
 Reading errors remain the largest class.
 \end{minipage}
 
