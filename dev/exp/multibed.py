@@ -41,7 +41,7 @@ def main():
     spec = importlib.util.spec_from_file_location("patch", sys.argv[1]); P = importlib.util.module_from_spec(spec); spec.loader.exec_module(P)
     eng = SearchEngine.load("data"); gold = read_jsonl("data/dev.jsonl")
     qs = [{"id": g["id"], "question": g["question"]} for g in gold]
-    beds = [(f, Kaggle) for f in sorted(glob.glob("dev/exp/beds/*.py"))] + [("agent.py", Server)]
+    beds = [(f, Kaggle) for f in sorted(glob.glob(os.environ.get("BEDS", "dev/exp/beds") + "/*.py"))] + [("agent.py", Server)]
     tmp = tempfile.mkdtemp()
     deltas = []
     for f, L in beds:
