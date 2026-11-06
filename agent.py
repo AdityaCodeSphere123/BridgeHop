@@ -268,10 +268,66 @@ def read(question: str, notes: Notes, tools) -> None:
         return
     num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
     cited = shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
+    if hop == 1 and notes.attempts[1] == 0:
+        ans, cited = second_opinion(question, notes, tools, context, subq, shown, ans, cited, last_chance)
     notes.answers[hop] = ans
     notes.cited[hop] = cited
     notes.hop = 1
     notes.shown = set()
+
+
+JUDGE_PROMPT = """{context}
+Question: {subq}
+
+Two answers were given, each with the passage it came from.
+Answer A: {a}
+Passage A: {pa}
+Answer B: {b}
+Passage B: {pb}
+
+Which answer is correct? Reply with only the letter A or B."""
+
+
+def second_opinion(question: str, notes: Notes, tools, context: str, subq: str, shown: list[Passage],
+                   ans: str, cited, last_chance: bool):
+    """Check a hop-2 answer with a second read of the same passages in reverse order (the model is
+    sensitive to passage order). If the second answer differs, one more call asks the model to choose
+    between the two, each shown with the passage it came from. The first answer is option A and is kept
+    whenever there is any doubt or no budget. Returns (answer, cited passage)."""
+    left = tools.budget_left()
+    if left["llm_calls"] < 2 or left["seconds"] < 25 or len(shown) < 2:
+        return ans, cited
+    try:
+        rev = list(reversed(shown))
+        block = "\n".join(f"[{i + 1}] {p.title}: {p.text[:PASSAGE_CHARS]}" for i, p in enumerate(rev))
+        out = tools.llm(READ_PROMPT.format(context=context, passages=block, subq=subq,
+                                           instruction=GUESS if last_chance else STRICT), max_tokens=48)
+        m = re.search(r"Answer\s*:\s*(.+)", out)
+        other = clean_answer(m.group(1) if m else out)
+        if is_unknown(other) or norm(other) == norm(ans) or norm(other) == norm(notes.answers[0]) \
+                or not fits_type(question, other):
+            return ans, cited
+        # If the second answer only adds words to the first, keep the first: gold answers are short.
+        # Added date parts are fine ("1810" -> "October 1810").
+        words, more = set(norm(ans).split()), set(norm(other).split())
+        if words < more and not all(re.fullmatch(r"\d+|" + MONTHS, w) for w in more - words):
+            return ans, cited
+        num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
+        cited2 = rev[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(rev) else None
+        p1 = cited if cited is not None and mentions(cited, ans) else \
+            next((p for p in shown if mentions(p, ans)), cited)
+        p2 = cited2 if cited2 is not None and mentions(cited2, other) else \
+            next((p for p in rev if mentions(p, other)), cited2)
+        if p1 is None or p2 is None:
+            return ans, cited
+        verdict = tools.llm(JUDGE_PROMPT.format(context=context.strip(), subq=subq, a=ans, b=other,
+                                                pa=f"{p1.title}: {p1.text[:PASSAGE_CHARS]}",
+                                                pb=f"{p2.title}: {p2.text[:PASSAGE_CHARS]}"), max_tokens=4)
+        if re.match(r"\W*(answer\s*)?b\b", verdict.strip(), re.I):
+            return other, p2
+    except (BudgetExhausted, PromptTooLong, LLMError):
+        pass
+    return ans, cited
 
 
 def retry_order(ranked: list[Passage], seen: set[str]) -> list[Passage]:
