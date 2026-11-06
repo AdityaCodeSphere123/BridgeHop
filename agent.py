@@ -267,7 +267,11 @@ def read(question: str, notes: Notes, tools) -> None:
     context = f"(This is one step towards answering: {question})" if hop == 0 else \
         f"(Main question: {question} We already know that #1 = {notes.answers[0]}.)"
     last_chance = notes.attempts[hop] >= 1 or tools.budget_left()["llm_calls"] <= 2
-    candidates = retry_order(notes.ranked(hop), notes.shown)
+    ranked = notes.ranked(hop)
+    if hop == 0:  # the article on the question's topic entity usually states hop 1's fact: put it first,
+        # since the model reads the first passages most reliably
+        ranked = [p for p in ranked if title_in(p, question)] + [p for p in ranked if not title_in(p, question)]
+    candidates = retry_order(ranked, notes.shown)
     out, shown = call_llm(
         tools,
         lambda block: READ_PROMPT.format(context=context, passages=block, subq=subq,
