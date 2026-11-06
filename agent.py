@@ -26,6 +26,7 @@ MIN_SECONDS_FOR_RETRY = 15 # do not start an extra read with less time than this
 UNKNOWN = "unknown"
 PLAN_MAX_OVERLAP = 0.9     # if Q1 repeats this share of the question's words, the plan is not used
 W_PREFER, W_CITED = 2, 1   # citation choice: weight for "right kind of passage" and for "the LLM chose it"
+W_WORDS = 1                # citation choice: weight for each word of the sub-question found in the passage
 MAX_ANSWER_WORDS = 10      # a longer reply is a sentence, not an answer
 
 
@@ -285,9 +286,15 @@ def retry_order(ranked: list[Passage], seen: set[str]) -> list[Passage]:
     return mixed + old[n:] + new[n:]
 
 
-def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None, prefer=None):
+def overlap(p: Passage, words: set[str]) -> int:
+    """How many of the words appear in the passage (title or text)."""
+    return len(words & set(norm(p.title + " " + p.text).split()))
+
+
+def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None, prefer=None, words=frozenset()):
     """Pick the passage to cite for an answer: one that contains the answer (not `avoid` if possible).
-    Prefer one that passes `prefer`, then the one the LLM chose, then the best ranked.
+    Prefer one that passes `prefer`, the one the LLM chose and one that shares many `words` with the
+    sub-question (several paragraphs of the same article often contain the answer); then the best ranked.
     If no passage contains the answer, use the LLM's choice."""
     containing = [p for p in candidates if mentions(p, ans)]
     containing = [p for p in containing if p.doc_id != avoid] or containing
@@ -297,7 +304,7 @@ def supporting_doc(ans: str, cited, candidates: list[Passage], avoid=None, prefe
     def merit(item):
         rank, p = item
         is_cited = cited is not None and p.doc_id == cited.doc_id
-        return (W_PREFER * bool(prefer and prefer(p)) + W_CITED * is_cited, -rank)
+        return (W_PREFER * bool(prefer and prefer(p)) + W_CITED * is_cited + W_WORDS * overlap(p, words), -rank)
 
     return max(enumerate(containing), key=merit)[1].doc_id
 
@@ -394,7 +401,21 @@ def answer(question: str, notes: Notes, tools) -> dict:
     if not usable(final):
         sentence = final if final and not is_unknown(final) else ""
         final = (notes.rejected or [sentence or notes.answers[0]])[-1]
-    return {"answer": final_form(final), "citations": citations(question, final, notes)}
+    return {"answer": final_form(drop_unit(question, final)), "citations": citations(question, final, notes)}
+
+
+def drop_unit(question: str, ans: str) -> str:
+    """For "how many X" questions keep only the number: "one season" -> "one", "5 times" -> "5".
+    Only words that the question already uses are dropped. A number in brackets after a number word
+    is dropped too: "thirty (30)" -> "thirty"."""
+    ans = re.sub(r"^(\S+)\s*\(\d[\d,.]*\)$", r"\1", ans.strip())
+    if not re.match(r"how many\b", question.strip(), re.I):
+        return ans
+    m = re.match(r"^(\d[\d,.]*|(?:" + NUMBER_WORDS + r")(?:[- ](?:" + NUMBER_WORDS + r"))*)\s+(.+)$", ans, re.I)
+    stem = lambda text: {w.rstrip("s") for w in norm(text).split()}  # "season" matches "seasons"
+    if m and stem(m.group(2)) <= stem(question) | {"time"}:
+        return m.group(1)
+    return ans
 
 
 MONTHS = "january|february|march|april|may|june|july|august|september|october|november|december"
@@ -449,10 +470,11 @@ def citations(question: str, final: str, notes: Notes) -> list[str]:
     cits = []
     if bridge:
         cits.append(supporting_doc(bridge, notes.cited[0], notes.ranked(0),
-                                   prefer=lambda p: title_in(p, question)))
+                                   prefer=lambda p: title_in(p, question), words=content_words(notes.subqs[0])))
     if final and final != bridge:
         cits.append(supporting_doc(final, notes.cited[1], notes.ranked(1), avoid=cits[0] if cits else None,
-                                   prefer=lambda p: bool(bridge) and mentions(p, bridge)))
+                                   prefer=lambda p: bool(bridge) and mentions(p, bridge),
+                                   words=content_words(notes.subqs[1].replace("#1", "")) | content_words(question)))
     cits = list(dict.fromkeys(d for d in cits if d))
     for hop in (0, 1):
         if len(cits) >= 2:
