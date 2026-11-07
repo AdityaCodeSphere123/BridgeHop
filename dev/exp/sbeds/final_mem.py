@@ -550,6 +550,7 @@ def final_form(ans: str) -> str:
     one word. Put spaces around hyphens so each part counts. Also drop "over", "about", ... before a
     number, because gold answers are short."""
     ans = ans.replace("*", "").strip()
+    ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "month-long" -> "month"
     # "Leyton, East London" -> "Leyton": gold answers rarely add a region after a comma.
     # Dates and numbers ("May 5, 1940", "8,491,079"), lists and abbreviations ("Washington, D.C.") stay.
     head, sep, tail = ans.partition(", ")
