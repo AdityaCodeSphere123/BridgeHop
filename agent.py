@@ -270,6 +270,7 @@ def read(question: str, notes: Notes, tools) -> None:
     cited = shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
     if hop == 1 and notes.attempts[1] == 0:
         ans, cited = second_opinion(question, notes, tools, context, subq, shown, ans, cited, last_chance)
+    if hop == 1:
         ans, cited = memory_check(question, notes, tools, context, subq, question, ans, cited)
     notes.answers[hop] = ans
     notes.cited[hop] = cited

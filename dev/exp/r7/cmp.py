@@ -9,7 +9,7 @@ if len(sys.argv)>2:
     print(f"tokens: {sum(v[1]+v[2] for v in (json.loads(l)['v'] for l in ls) if isinstance(v,list) and len(v)==3):,}")
 gold={g['id']:g for g in map(json.loads,open('data/dev.jsonl'))}; order=list(gold)
 L=lambda n:{r['id']:r for r in map(json.loads,open(f'runs/{n}/predictions.jsonl'))}
-b,r=L('S_final'),L(run)
+b,r=L(os.environ.get('BASE','S_final')),L(run)
 h=[E.score([r[i] for i in order[k:k+150]],[gold[i] for i in order[k:k+150]])['S']-E.score([b[i] for i in order[k:k+150]],[gold[i] for i in order[k:k+150]])['S'] for k in (0,150)]
 F=lambda x,g: E.answer_scores(x['answer'],[g['answer']]+g['answer_aliases'])[1]
 print("halves",[round(x,4) for x in h],"wins",sum(F(r[i],gold[i])>F(b[i],gold[i])+1e-9 for i in order),"losses",sum(F(r[i],gold[i])<F(b[i],gold[i])-1e-9 for i in order))
