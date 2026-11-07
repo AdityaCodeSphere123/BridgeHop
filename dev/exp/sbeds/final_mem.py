@@ -213,11 +213,29 @@ def parse_plan(out: str, question: str):
 def plan(question: str, notes: Notes, tools) -> None:
     """Ask for a plan; if it is not usable, ask once more with the second prompt.
     If both fail, both hops keep the original question."""
+    first = None
     for prompt in (PLAN_PROMPT, PLAN_RETRY_PROMPT):
         parsed = parse_plan(tools.llm(prompt.format(question=question), max_tokens=80), question)
-        if parsed:
+        if parsed and not wrong_place_type(question, parsed[0]):
             notes.subqs = list(parsed)
-            break
+            return
+        first = first or parsed
+    if first:  # the second plan was no better: keep the first one
+        notes.subqs = list(first)
+
+
+PLACE_TYPES = r"\b(country|state|county|province|city|town|region|district|continent|parish)\b"
+
+
+def wrong_place_type(question: str, q1: str) -> bool:
+    """Q1 should ask for the hidden entity as the question describes it. It is suspect when it adds a kind
+    of place the question never mentions ("the birthplace of X" -> "In which country was X born?"), or
+    when it already asks for the kind of place the whole question wants (the two hops were merged)."""
+    in_q1 = {w.lower() for w in re.findall(PLACE_TYPES, q1, re.I)}
+    in_q = {w.lower() for w in re.findall(PLACE_TYPES, question, re.I)}
+    target = re.match(r"\s*(?:in\s+)?(?:what|which)\s+(?:other\s+)?(\w+)", question, re.I)
+    return bool(in_q1 - in_q) or bool(target and target.group(1).lower() in in_q1 and
+                                      len(re.findall(PLACE_TYPES, question, re.I)) == 1)
 
 
 # Read: the LLM answers the current hop from the passages
