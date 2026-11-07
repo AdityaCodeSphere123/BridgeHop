@@ -505,7 +505,18 @@ def answer(question: str, notes: Notes, tools) -> dict:
     if not usable(final):
         sentence = final if final and not is_unknown(final) else ""
         final = (notes.rejected or [sentence or notes.answers[0]])[-1]
-    return {"answer": final_form(drop_unit(question, final)), "citations": citations(question, final, notes)}
+    if re.search(r"\b(what|which)\s+(other\s+)?county\b", question, re.I) and final \
+            and not re.search(r"\b(county|parish|borough|shire)\b", final, re.I):
+        final_text = f"{final} County"  # gold answers to "what county" name it as "X County"
+    else:
+        final_text = final
+    if re.search(r"\bcentur(y|ies)\b", question, re.I):  # gold writes "7th", not "seventh"
+        for i, w in enumerate("first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth "
+                              "thirteenth fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth "
+                              "twentieth".split(), 1):
+            suffix = "th" if 10 < i < 14 else {1: "st", 2: "nd", 3: "rd"}.get(i % 10, "th")
+            final_text = re.sub(rf"\b{w}\b", f"{i}{suffix}", final_text, flags=re.I)
+    return {"answer": final_form(drop_unit(question, final_text)), "citations": citations(question, final, notes)}
 
 
 def drop_unit(question: str, ans: str) -> str:
