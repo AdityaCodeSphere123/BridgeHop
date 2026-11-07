@@ -270,6 +270,7 @@ def read(question: str, notes: Notes, tools) -> None:
     cited = shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
     if hop == 1 and notes.attempts[1] == 0:
         ans, cited = second_opinion(question, notes, tools, context, subq, shown, ans, cited, last_chance)
+        ans, cited = memory_check(question, notes, tools, context, subq, question, ans, cited)
     notes.answers[hop] = ans
     notes.cited[hop] = cited
     notes.hop = 1
@@ -286,6 +287,46 @@ Answer B: {b}
 Passage B: {pb}
 
 Which answer is correct? Reply with only the letter A or B."""
+
+
+CLOSED_PROMPT = """Answer the question from your own knowledge. Reply with only the shortest exact answer
+(a name, place, date or number), or "unknown" if you do not know.
+Question: {q}
+Answer:"""
+
+
+# The model's own knowledge is newer than the dataset, so it is not asked about things that change over time.
+TIME_SENSITIVE = re.compile(r"\b(last|latest|most recent|current|currently|now|today|recent)\b", re.I)
+
+
+def memory_check(question: str, notes: Notes, tools, context: str, asked: str, judge_q: str, ans: str, cited):
+    """A third, independent opinion: the model answers from its own knowledge, without passages. If that
+    answer differs from ours and some retrieved passage contains it, the judge chooses between the two,
+    each shown with its passage. Our answer is option A and wins on any doubt."""
+    left = tools.budget_left()
+    if left["llm_calls"] < 2 or left["seconds"] < 20 or TIME_SENSITIVE.search(question):
+        return ans, cited
+    try:
+        out = tools.llm(CLOSED_PROMPT.format(q=asked), max_tokens=24)
+        other = clean_answer(re.sub(r"^\s*answer\s*:\s*", "", out, flags=re.I))
+        if is_unknown(other) or norm(other) in norm(ans) or norm(ans) in norm(other):
+            return ans, cited
+        if notes.hop == 1 and (norm(other) == norm(notes.answers[0]) or not fits_type(question, other)):
+            return ans, cited
+        pool = notes.ranked(notes.hop)
+        p2 = next((p for p in pool if mentions(p, other)), None)  # only answers that a passage supports
+        p1 = cited if cited is not None and mentions(cited, ans) else \
+            next((p for p in pool if mentions(p, ans)), cited)
+        if p1 is None or p2 is None:
+            return ans, cited
+        verdict = tools.llm(JUDGE_PROMPT.format(context=context.strip(), subq=judge_q, a=ans, b=other,
+                                                pa=f"{p1.title}: {p1.text[:PASSAGE_CHARS]}",
+                                                pb=f"{p2.title}: {p2.text[:PASSAGE_CHARS]}"), max_tokens=4)
+        if re.match(r"\W*(answer\s*)?b\b", verdict.strip(), re.I):
+            return other, p2
+    except (BudgetExhausted, PromptTooLong, LLMError):
+        pass
+    return ans, cited
 
 
 def second_opinion(question: str, notes: Notes, tools, context: str, subq: str, shown: list[Passage],

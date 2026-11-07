@@ -1,0 +1,43 @@
+Loading corpus and BM25 index ...
+Running dev/exp/r7/t1_when_hint.py on 300 questions with 8 workers ...
+  10/300 questions  (0s)
+  20/300 questions  (0s)
+  30/300 questions  (2s)
+  40/300 questions  (2s)
+  50/300 questions  (3s)
+  60/300 questions  (3s)
+  70/300 questions  (4s)
+  80/300 questions  (4s)
+  90/300 questions  (4s)
+  100/300 questions  (5s)
+  110/300 questions  (6s)
+  120/300 questions  (7s)
+  130/300 questions  (8s)
+  140/300 questions  (9s)
+  150/300 questions  (10s)
+  160/300 questions  (11s)
+  170/300 questions  (12s)
+  180/300 questions  (12s)
+  190/300 questions  (13s)
+  200/300 questions  (14s)
+  210/300 questions  (14s)
+  220/300 questions  (14s)
+  230/300 questions  (15s)
+  240/300 questions  (15s)
+  250/300 questions  (15s)
+  260/300 questions  (16s)
+  270/300 questions  (17s)
+  280/300 questions  (17s)
+  290/300 questions  (19s)
+  300/300 questions  (21s)
+
+================ results ================
+questions          300
+S (leaderboard)    0.5703   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.5517
+answer EM          0.4733
+evidence F1        0.6450
+mean search calls  4.27
+mean LLM calls     4.62
+status             {'ok': 300}
+outputs            runs/S_t1/
