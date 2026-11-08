@@ -126,7 +126,7 @@ Dev set, 300 questions & EM & Ans.\ F1 & Ev.\ F1 & $S$ & Search & LLM\\
 \midrule
 B1 single-shot (starter) & 0.1400 & 0.2110 & 0.3717 & 0.2431 & 1.00 & 1.00\\
 B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.03\\
-\textbf{My agent (final, leaderboard)} & \textbf{0.5067} & \textbf{0.5865} & \textbf{0.6500} & \textbf{0.5992} & 4.25 & 5.20\\
+\textbf{My agent (final, leaderboard)} & \textbf{0.5333} & \textbf{0.6082} & \textbf{0.6583} & \textbf{0.6182} & 4.34 & 5.19\\
 \bottomrule
 \end{tabular}
 \captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search/LLM = mean calls per question.}
@@ -139,10 +139,10 @@ B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.
 \toprule
 Diagnostic & B1 & Mine\\
 \midrule
-both gold paragraphs retrieved & 15.3\% & 68.3\%\\
-hop-2 paragraph retrieved & 23.3\% & 71.0\%\\
+both gold paragraphs retrieved & 15.3\% & 68.0\%\\
+hop-2 paragraph retrieved & 23.3\% & 71.3\%\\
 bridge (hop-1 answer) correct & -- & 75.0\%\\
-gold paragraphs cited (of 2) & 0.74 & 1.30\\
+gold paragraphs cited (of 2) & 0.74 & 1.31\\
 \bottomrule
 \end{tabular}
 \captionof{table}{Why iterating helps (\texttt{dev/analyze.py}).}
@@ -157,11 +157,12 @@ leaderboard harness with status \texttt{ok}, within 6 LLM calls and the 60\,s li
 \section{Design}
 \textbf{\texttt{next\_query}.} Hop~1 searches Q1 and the original question ($k{=}10$ each). Hop~2 searches Q2 with the bridge filled in and the bridge
 followed by the question, both without question words (\emph{what, when, did}\dots). The lists of a hop are fused by reciprocal rank ($\sum 1/(3+\mathrm{rank})$), which lifts passages
-that both queries rank highly. This raised hop-2 recall (gold paragraph shown) from 55\% to 64\%. A failed hop-2 read searches the bridge alone (its own article), or for a \emph{when} question the bridge plus
+that both queries rank highly. A failed hop-2 read searches the bridge alone (its own article), or for a \emph{when} question the bridge plus
 the first sentence of an LLM-written answer passage (Query2doc); a failed hop-1 read searches Q1 plus the first sentence of such a passage written for Q1. \textbf{The plan} is re-asked when Q2 lacks \#1, Q1 restates $\ge$90\% of
 the question's content words, or Q1 adds a kind of place (\emph{birthplace of X}$\to$\emph{which country}); the retry prompt makes the model first name the hidden entity (\emph{``the
-birthplace of X''}) with six invented examples. \textbf{Reading} shows 10/12 passages; at hop~1 the article
-whose title is named in the question goes first.
+birthplace of X''}) with six invented examples. \textbf{Reading} shows 10/12 whole passages; at hop~1 the article
+whose title is named in the question goes first. A bridge read from a passage that is neither first nor that
+article (38\% right) is read once more after a Query2doc search for Q1.
 
 \textbf{Second read, judge, memory.} A hop-2 answer is checked by reading the same passages in reverse order
 with the original question instead of Q2, which the plan sometimes words badly. If the answers really differ, one
@@ -171,12 +172,10 @@ to spare, the model also answers Q2 from memory; if a retrieved passage holds th
 \textbf{\texttt{should\_stop}.} Stop as soon as hop~2 has an answer that is not \emph{unknown} and does not
 just repeat the bridge, or when only one LLM call is left (reserved for \texttt{answer}) or under 15\,s remain.
 
-\textbf{\texttt{answer}.} Hop~2's answer; if it is a refusal or a sentence, one forced best-guess call, then a
-hop-2 answer rejected for repeating the bridge, then the bridge. Hyphens are spaced (\emph{2001-02-13}$\to$\emph{2001 - 02 - 13}), as
+\textbf{\texttt{answer}.} Hop~2's answer; else one forced best-guess call, then fallbacks. Hyphens are spaced (\emph{2001-02-13}$\to$\emph{2001 - 02 - 13}), as
 the scorer deletes punctuation, and a hedge before a number is dropped. \textbf{Citations} are chosen after all searches: the passage that mentions the bridge (preferring
 the topic entity's article) and the one that mentions the answer (preferring one that also names the bridge),
-exactly two because the gold evidence is two paragraphs; each sub-question word a passage shares adds weight,
-since an article's paragraphs often all contain the answer. A region after a comma is cut (\emph{Leyton, East
+exactly two (the gold evidence is two paragraphs); each sub-question word a passage shares adds weight. A region after a comma is cut (\emph{Leyton, East
 London}$\to$\emph{Leyton}) and \emph{how many X} answers drop the unit (\emph{one season}$\to$\emph{one}); county answers end in
 \emph{County} and centuries use numerals (\emph{seventh}$\to$\emph{7th}), as in the gold data.
 
@@ -184,18 +183,18 @@ London}$\to$\emph{Leyton}) and \emph{how many X} answers drop the unit (\emph{on
 \vspace{0pt}
 \centering
 \begin{tikzpicture}
-\begin{axis}[xbar, bar shift=0pt, width=4.2cm, height=3.4cm, scale only axis, bar width=3.4pt,
-  xmin=0.49, xmax=0.615, xtick={0.50,0.52,0.54,0.56,0.58,0.60},
+\begin{axis}[xbar, bar shift=0pt, width=4.2cm, height=3.4cm, scale only axis, bar width=3pt,
+  xmin=0.49, xmax=0.635, xtick={0.50,0.52,0.54,0.56,0.58,0.60,0.62},
   xticklabel style={font=\scriptsize,/pgf/number format/fixed,/pgf/number format/precision=2},
   yticklabel style={font=\scriptsize}, xlabel={dev $S$}, xlabel style={font=\scriptsize},
-  symbolic y coords={a,b,c,d,e,f,g,h,i,j,k,l}, ytick={a,b,c,d,e,f,g,h,i,j,k,l}, y dir=reverse,
+  symbolic y coords={a,b,c,d,e,f,g,h,i,j,k,l,m,n}, ytick={a,b,c,d,e,f,g,h,i,j,k,l,m,n}, y dir=reverse,
   yticklabels={first iterative agent, +answer fallbacks\,\&\,citations, +$k{=}10$\,/\,RRF\,/\,retries,
-    +plan check \& retry prompt, +topic article first, +output formatting, +clean-up \& citation words, +second read \& judge, +original question in judge, +memory\,/\,plan\,/\,format fixes, +Query2doc retry (\emph{when}), +Query2doc retry (hop~1)},
+    +plan check \& retry prompt, +topic article first, +output formatting, +clean-up \& citation words, +second read \& judge, +original question in judge, +memory\,/\,plan\,/\,format fixes, +Query2doc retry (\emph{when}), +Query2doc retry (hop~1), +weak-bridge recheck, +whole passages},
   enlarge y limits=0.1, xmajorgrids=true, major grid style={gray!22}, axis line style={gray!70},
   nodes near coords, nodes near coords style={font=\scriptsize,/pgf/number format/fixed,
     /pgf/number format/fixed zerofill,/pgf/number format/precision=4}]
-\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,c) (0.5402,d) (0.5441,e) (0.5576,g) (0.5667,h) (0.5757,i) (0.5896,j) (0.5959,k) (0.5992,l)};
-\addplot[fill=cC!45, draw=cC, line width=0.4pt] coordinates {(0.5165,b) (0.5521,f)};
+\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,c) (0.5402,d) (0.5441,e) (0.5576,g) (0.5667,h) (0.5757,i) (0.5896,j) (0.5959,k) (0.5992,l) (0.6182,n)};
+\addplot[fill=cC!45, draw=cC, line width=0.4pt] coordinates {(0.5165,b) (0.5521,f) (0.6021,m)};
 \end{axis}
 \end{tikzpicture}
 \captionof{figure}{Each change, cumulative. Blue: leaderboard. Green: exact replay of recorded server
@@ -206,16 +205,14 @@ outputs (prompts unchanged, so the score is exact).}
 \vspace{0pt}
 \textbf{What the gains came from.}
 \begin{itemize}
-\item \textbf{Bad plans.} When Q1 restates the question (20 dev questions) answer F1 was 0.23, and 0.35 when
-the plan did not parse (20), vs.\ 0.53 otherwise.
-\item \textbf{Position.} In 303 recorded hop-1 reads that contained the gold passage, the bridge was right
-67\% of the time when that passage came first and 30\% when it came second; hence topic article first.
+\item \textbf{Bad plans.} Answer F1 was 0.23 when Q1 restated the question and 0.35 with no plan, vs.\ 0.53.
+\item \textbf{Position.} With the gold passage first the bridge was right 67\% of the time, second 30\%.
+\item \textbf{Cut passages.} Passages were cut at 1,200 characters, which hid the answer of 5 gold
+passages; showing them whole (none exceeds 2,000) fixed 8 answers (+0.016).
 \end{itemize}
-\textbf{Tried, did not help.} Asking the model to quote the evidence before the answer: $S$ fell from 0.5441
-to 0.5337. A third
-citation lowered evidence F1 (0.58$\to$0.47--0.50 in simulation). About 30 more variants lost or tied, e.g.\ reasoning first, judging the
-bridge, backtracking to a second bridge, and Query2doc for every question (hop-2 recall 79$\to$88\%, but its extra call took
-the judge's budget).
+\textbf{Tried, did not help.} Quoting the evidence first ($S$ 0.5441$\to$0.5337), a third citation and
+about 30 more variants (reasoning first, judging the bridge, backtracking, 14 passages at hop~2, Query2doc for
+every question: recall 79$\to$88\% but it took the judge's budget) lost or tied.
 \end{minipage}
 
 % =====================================================================
@@ -252,7 +249,7 @@ total & 258 & 178 & 163\\
 because the bridge is now searched for. Category (iii) grew from 15 to 50 for the same reason: far more
 questions now reach the final read with both gold paragraphs in the prompt (46 for B1, 203 now), and there
 the 4B reader reaches an answer F1 of only 0.70. The plan fix and the passage ordering
-attacked (i); the judge and memory steps attack (iii): on the server they cut (iii) from 50 to 43 (total 163$\to$148).
+attacked (i); the judge and memory steps attack (iii): on the server the final agent has (iii)~41 (total 163$\to$140).
 Reading errors remain the largest class.
 \end{minipage}
 

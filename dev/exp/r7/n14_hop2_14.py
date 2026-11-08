@@ -18,10 +18,10 @@ from a4 import BudgetExhausted, LLMError, PromptTooLong, Passage
 
 # Settings
 K = 10                     # passages returned by each search (the maximum allowed)
-READ_PASSAGES = (10, 12)   # passages shown to the LLM when reading hop 1 and hop 2
-PASSAGE_CHARS = 1200       # long passages are cut to this many characters
+READ_PASSAGES = (10, 14)   # passages shown to the LLM when reading hop 1 and hop 2
+PASSAGE_CHARS = 2000       # no passage in the corpus is longer, so passages are shown whole
 RRF_C = 3                  # constant in reciprocal rank fusion: score = sum of 1 / (RRF_C + rank)
-PROMPT_CHAR_BUDGET = 9000  # about 2,300 tokens, safely under the 3,000-token prompt limit
+PROMPT_CHAR_BUDGET = 11000 # about 2,750 tokens; a prompt over the 3,000-token limit is retried shorter
 MIN_SECONDS_FOR_RETRY = 15 # do not start an extra read with less time than this left
 UNKNOWN = "unknown"
 PLAN_MAX_OVERLAP = 0.9     # if Q1 repeats this share of the question's words, the plan is not used
@@ -286,8 +286,11 @@ def read(question: str, notes: Notes, tools) -> None:
         return
     num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
     cited = shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
+    if hop == 0 and notes.attempts[0] == 0 and cited is not None and shown and cited.doc_id != shown[0].doc_id \
+            and not title_in(cited, question):
+        ans, cited = recheck_weak_bridge(question, notes, tools, context, subq, ans, cited)
     if hop == 1 and notes.attempts[1] == 0:
-        ans, cited = second_opinion(question, notes, tools, context, subq, shown, ans, cited, last_chance)
+        ans, cited = second_opinion(question, notes, tools, context, shown, ans, cited, last_chance)
     if hop == 1:
         ans, cited = memory_check(question, notes, tools, context, subq, question, ans, cited)
     notes.answers[hop] = ans
@@ -348,7 +351,35 @@ def memory_check(question: str, notes: Notes, tools, context: str, asked: str, j
     return ans, cited
 
 
-def second_opinion(question: str, notes: Notes, tools, context: str, subq: str, shown: list[Passage],
+def recheck_weak_bridge(question: str, notes: Notes, tools, context: str, subq: str, ans: str, cited):
+    """A bridge read from a passage that is neither first nor the article named in the question is often
+    wrong (38% right on the dev set). Search again with Q1 plus a hypothetical answer sentence (Query2doc),
+    read hop 1 once more with the new passages, and take that answer if it is a real one."""
+    left = tools.budget_left()
+    if left["llm_calls"] < 4 or left["search_calls"] < 3 or left["seconds"] < 30:
+        return ans, cited
+    passage = hypothetical_passage(subq, tools)
+    if not passage:
+        return ans, cited
+    query = f"{keywords(subq)} {re.split(r'(?<=[.!?])\s', passage)[0]}"
+    try:
+        notes.add(query, tools.search(query, k=K))
+        ranked = notes.ranked(0)
+        ranked = [p for p in ranked if title_in(p, question)] + [p for p in ranked if not title_in(p, question)]
+        out, shown = call_llm(tools, lambda block: READ_PROMPT.format(context=context, passages=block, subq=subq,
+                                                                      instruction=STRICT),
+                              ranked, max_tokens=48, limit=READ_PASSAGES[0])
+    except (BudgetExhausted, PromptTooLong, LLMError):
+        return ans, cited
+    m = re.search(r"Answer\s*:\s*(.+)", out)
+    new = clean_answer(m.group(1) if m else out)
+    if is_unknown(new):
+        return ans, cited
+    num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
+    return new, shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
+
+
+def second_opinion(question: str, notes: Notes, tools, context: str, shown: list[Passage],
                    ans: str, cited, last_chance: bool):
     """Check a hop-2 answer with a second read: the same passages in reverse order (the model is sensitive
     to passage order), asked with the original question instead of the plan's Q2 (which can be badly
@@ -371,11 +402,11 @@ def second_opinion(question: str, notes: Notes, tools, context: str, subq: str, 
                 or not fits_type(question, other):
             return ans, cited
         # If the second answer only adds words to the first, keep the first: gold answers are short.
-        # Added date parts are fine ("1810" -> "October 1810").
+        # Added date parts are fine ("1902" -> "June 1902").
         words, more = set(norm(ans).split()), set(norm(other).split())
         if words < more and not all(re.fullmatch(r"\d+|" + MONTHS, w) for w in more - words):
             return ans, cited
-        # The second answer is a piece of the first ("34th" -> "34"): not a real disagreement either.
+        # The second answer is a piece of the first ("12th" -> "12"): not a real disagreement either.
         if norm(other) in norm(ans):
             return ans, cited
         num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
@@ -476,6 +507,11 @@ def next_query(question: str, notes: Notes, tools) -> list[tuple[str, int]]:
             return [(f"{bridge} {bridge} {first}", K)]
     if notes.hop == 1 and bridge not in notes.queries:
         return [(bridge, K)]
+    if notes.hop == 0 and notes.attempts[0] == 1 and tools.budget_left()["llm_calls"] >= 4:
+        # Hop 1 found nothing: search with Q1 plus the first sentence of a hypothetical answer passage.
+        passage = hypothetical_passage(subq, tools)
+        if passage:
+            return [(f"{keywords(subq)} {re.split(r'(?<=[.!?])\s', passage)[0]}", K)]
     used = " ".join(notes.queries)
     for p in notes.ranked(notes.hop):
         if p.title not in used:
@@ -549,7 +585,10 @@ def answer(question: str, notes: Notes, tools) -> dict:
         final_text = f"{final} County"  # gold answers to "what county" name it as "X County"
     else:
         final_text = final
-    if re.search(r"\bcentur(y|ies)\b", question, re.I):  # gold writes "7th", not "seventh"
+    long_form = re.search(r"\b(\w+)\s*-\s*long\b", final_text)
+    if long_form and re.match(r"\s*how long\b", question, re.I):  # "a week-long festival" -> "week"
+        final_text = long_form.group(1)
+    if re.search(r"\bcentur(y|ies)\b", question, re.I):  # gold writes "9th", not "ninth"
         for i, w in enumerate("first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth "
                               "thirteenth fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth "
                               "twentieth".split(), 1):
@@ -559,9 +598,9 @@ def answer(question: str, notes: Notes, tools) -> dict:
 
 
 def drop_unit(question: str, ans: str) -> str:
-    """For "how many X" questions keep only the number: "one season" -> "one", "5 times" -> "5".
+    """For "how many X" questions keep only the number: "two seasons" -> "two", "3 times" -> "3".
     Only words that the question already uses are dropped. A number in brackets after a number word
-    is dropped too: "thirty (30)" -> "thirty"."""
+    is dropped too: "twelve (12)" -> "twelve"."""
     ans = re.sub(r"^(\S+)\s*\(\d[\d,.]*\)$", r"\1", ans.strip())
     if not re.match(r"how many\b", question.strip(), re.I):
         return ans
@@ -600,9 +639,9 @@ def final_form(ans: str) -> str:
     one word. Put spaces around hyphens so each part counts. Also drop "over", "about", ... before a
     number, because gold answers are short."""
     ans = ans.replace("*", "").strip()
-    ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "month-long" -> "month"
-    # "Leyton, East London" -> "Leyton": gold answers rarely add a region after a comma.
-    # Dates and numbers ("May 5, 1940", "8,491,079"), lists and abbreviations ("Washington, D.C.") stay.
+    ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "week-long" -> "week"
+    # "Riverton, West Yorkshire" -> "Riverton": gold answers rarely add a region after a comma.
+    # Dates and numbers ("June 3, 1902", "1,234,567"), lists and abbreviations ("Washington, D.C.") stay.
     head, sep, tail = ans.partition(", ")
     if sep and re.match(r"[A-Za-z]", tail) and "." not in tail and not re.search(r"\b(and|or)\b|&", ans):
         ans = head

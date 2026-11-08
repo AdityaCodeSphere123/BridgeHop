@@ -1,0 +1,43 @@
+Loading corpus and BM25 index ...
+Running dev/exp/r7/n14_hop2_14.py on 300 questions with 8 workers ...
+  10/300 questions  (3s)
+  20/300 questions  (7s)
+  30/300 questions  (11s)
+  40/300 questions  (15s)
+  50/300 questions  (18s)
+  60/300 questions  (20s)
+  70/300 questions  (24s)
+  80/300 questions  (27s)
+  90/300 questions  (31s)
+  100/300 questions  (34s)
+  110/300 questions  (37s)
+  120/300 questions  (40s)
+  130/300 questions  (43s)
+  140/300 questions  (47s)
+  150/300 questions  (50s)
+  160/300 questions  (54s)
+  170/300 questions  (57s)
+  180/300 questions  (60s)
+  190/300 questions  (63s)
+  200/300 questions  (68s)
+  210/300 questions  (71s)
+  220/300 questions  (75s)
+  230/300 questions  (78s)
+  240/300 questions  (80s)
+  250/300 questions  (84s)
+  260/300 questions  (87s)
+  270/300 questions  (90s)
+  280/300 questions  (93s)
+  290/300 questions  (96s)
+  300/300 questions  (98s)
+
+================ results ================
+questions          300
+S (leaderboard)    0.6160   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.6054
+answer EM          0.5333
+evidence F1        0.6583
+mean search calls  4.35
+mean LLM calls     5.21
+status             {'ok': 300}
+outputs            runs/S_n14/
