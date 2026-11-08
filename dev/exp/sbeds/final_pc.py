@@ -639,6 +639,14 @@ def final_form(ans: str) -> str:
     one word. Put spaces around hyphens so each part counts. Also drop "over", "about", ... before a
     number, because gold answers are short."""
     ans = ans.replace("*", "").strip()
+    # Gold answers are bare names: drop a trailing "for ..." clause ("labor union for employees" -> "labor union")
+    # and a trailing "people" ("the Inca people" -> "the Inca").
+    head, sep, _ = ans.partition(" for ")
+    if sep and len(head.split()) >= 2 and not re.search(r"\d", ans):
+        ans = head
+    group = re.match(r"(.+?)\s+people$", ans, re.I)
+    if group and norm(group.group(1)):  # keep "the people" as it is
+        ans = group.group(1)
     ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "week-long" -> "week"
     # "Riverton, West Yorkshire" -> "Riverton": gold answers rarely add a region after a comma.
     # Dates and numbers ("June 3, 1902", "1,234,567"), lists and abbreviations ("Washington, D.C.") stay.
