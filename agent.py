@@ -286,6 +286,9 @@ def read(question: str, notes: Notes, tools) -> None:
         return
     num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
     cited = shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
+    if hop == 0 and notes.attempts[0] == 0 and cited is not None and shown and cited.doc_id != shown[0].doc_id \
+            and not title_in(cited, question):
+        ans, cited = recheck_weak_bridge(question, notes, tools, context, subq, ans, cited)
     if hop == 1 and notes.attempts[1] == 0:
         ans, cited = second_opinion(question, notes, tools, context, subq, shown, ans, cited, last_chance)
     if hop == 1:
@@ -346,6 +349,34 @@ def memory_check(question: str, notes: Notes, tools, context: str, asked: str, j
     except (BudgetExhausted, PromptTooLong, LLMError):
         pass
     return ans, cited
+
+
+def recheck_weak_bridge(question: str, notes: Notes, tools, context: str, subq: str, ans: str, cited):
+    """A bridge read from a passage that is neither first nor the article named in the question is often
+    wrong (38% right on the dev set). Search again with Q1 plus a hypothetical answer sentence (Query2doc),
+    read hop 1 once more with the new passages, and take that answer if it is a real one."""
+    left = tools.budget_left()
+    if left["llm_calls"] < 4 or left["search_calls"] < 3 or left["seconds"] < 30:
+        return ans, cited
+    passage = hypothetical_passage(subq, tools)
+    if not passage:
+        return ans, cited
+    query = f"{keywords(subq)} {re.split(r'(?<=[.!?])\s', passage)[0]}"
+    try:
+        notes.add(query, tools.search(query, k=K))
+        ranked = notes.ranked(0)
+        ranked = [p for p in ranked if title_in(p, question)] + [p for p in ranked if not title_in(p, question)]
+        out, shown = call_llm(tools, lambda block: READ_PROMPT.format(context=context, passages=block, subq=subq,
+                                                                      instruction=STRICT),
+                              ranked, max_tokens=48, limit=READ_PASSAGES[0])
+    except (BudgetExhausted, PromptTooLong, LLMError):
+        return ans, cited
+    m = re.search(r"Answer\s*:\s*(.+)", out)
+    new = clean_answer(m.group(1) if m else out)
+    if is_unknown(new):
+        return ans, cited
+    num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
+    return new, shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
 
 
 def second_opinion(question: str, notes: Notes, tools, context: str, subq: str, shown: list[Passage],
