@@ -29,3 +29,15 @@ Running dev/exp/r7/rq_q2d_retry.py on 300 questions with 8 workers ...
   270/300 questions  (7s)
   280/300 questions  (7s)
   290/300 questions  (7s)
+  300/300 questions  (9s)
+
+================ results ================
+questions          300
+S (leaderboard)    0.5768   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.5576
+answer EM          0.4900
+evidence F1        0.6533
+mean search calls  4.27
+mean LLM calls     5.23
+status             {'ok': 300}
+outputs            runs/S_rq/
