@@ -289,7 +289,17 @@ def read(question: str, notes: Notes, tools) -> None:
     if hop == 0 and notes.attempts[0] == 0 and cited is not None and shown and cited.doc_id != shown[0].doc_id \
             and not title_in(cited, question):
         ans, cited = recheck_weak_bridge(question, notes, tools, context, subq, ans, cited)
-    if hop == 1 and notes.attempts[1] == 0:
+    if hop == 1 and notes.attempts[1] == 0 and cited is not None and not mentions(cited, ans) \
+            and any(mentions(p, ans) for p in shown):
+        # The cited passage lacks the answer although another passage has it: the model mixed up its
+        # evidence. Ask for a second opinion first; if it only confirms the doubtful answer, search again.
+        checked, checked_cited = second_opinion(question, notes, tools, context, shown, ans, cited, last_chance)
+        if norm(checked) == norm(ans):
+            notes.attempts[1] += 1
+            notes.rejected.append(ans)
+            return
+        ans, cited = checked, checked_cited
+    elif hop == 1 and notes.attempts[1] == 0:
         ans, cited = second_opinion(question, notes, tools, context, shown, ans, cited, last_chance)
     if hop == 1:
         ans, cited = memory_check(question, notes, tools, context, subq, question, ans, cited)
