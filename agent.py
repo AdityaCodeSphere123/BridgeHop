@@ -19,9 +19,9 @@ from a4 import BudgetExhausted, LLMError, PromptTooLong, Passage
 # Settings
 K = 10                     # passages returned by each search (the maximum allowed)
 READ_PASSAGES = (10, 12)   # passages shown to the LLM when reading hop 1 and hop 2
-PASSAGE_CHARS = 1200       # long passages are cut to this many characters
+PASSAGE_CHARS = 2000       # no passage in the corpus is longer, so passages are shown whole
 RRF_C = 3                  # constant in reciprocal rank fusion: score = sum of 1 / (RRF_C + rank)
-PROMPT_CHAR_BUDGET = 9000  # about 2,300 tokens, safely under the 3,000-token prompt limit
+PROMPT_CHAR_BUDGET = 11000 # about 2,750 tokens; a prompt over the 3,000-token limit is retried shorter
 MIN_SECONDS_FOR_RETRY = 15 # do not start an extra read with less time than this left
 UNKNOWN = "unknown"
 PLAN_MAX_OVERLAP = 0.9     # if Q1 repeats this share of the question's words, the plan is not used
