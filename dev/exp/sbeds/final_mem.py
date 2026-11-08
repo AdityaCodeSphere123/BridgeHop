@@ -439,6 +439,19 @@ def title_in(p: Passage, question: str) -> bool:
 
 # (a) next_query
 
+PSEUDO_PROMPT = """Write a short Wikipedia-style paragraph (two or three sentences) that answers the question.
+Question: {q}
+Paragraph:"""
+
+
+def hypothetical_passage(subq: str, tools) -> str:
+    """Ask the LLM for a passage that might answer the question (its facts may be wrong; its words help BM25)."""
+    try:
+        return " ".join(tools.llm(PSEUDO_PROMPT.format(q=subq), max_tokens=96).split())
+    except (BudgetExhausted, PromptTooLong, LLMError):
+        return ""
+
+
 def next_query(question: str, notes: Notes, tools) -> list[tuple[str, int]]:
     """Return the next searches as (query, k) pairs.
 
@@ -453,6 +466,14 @@ def next_query(question: str, notes: Notes, tools) -> list[tuple[str, int]]:
         if "#1" not in notes.subqs[1]:  # no usable plan: Q2 is the whole question, so add the bridge
             return [(f"{bridge} {keywords(question)}", K), (bridge, K)]
         return [(keywords(subq), K), (f"{bridge} {keywords(question)}", K)]
+    if notes.hop == 1 and notes.attempts[1] == 1 and tools.budget_left()["llm_calls"] >= 3 \
+            and re.match(r"\s*(when|what year|in what year|which year|what date)\b", question, re.I):
+        # Query2doc / HyDE for "when" questions: the first hop-2 read found nothing, and the bridge's own article
+        # rarely dates a specific event, so search with the bridge plus a hypothetical answer passage instead.
+        passage = hypothetical_passage(subq, tools)
+        if passage:
+            first = re.split(r"(?<=[.!?])\s", passage)[0]  # its first sentence only, so the bridge still counts most
+            return [(f"{bridge} {bridge} {first}", K)]
     if notes.hop == 1 and bridge not in notes.queries:
         return [(bridge, K)]
     used = " ".join(notes.queries)
