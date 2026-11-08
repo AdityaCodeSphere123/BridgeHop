@@ -476,6 +476,11 @@ def next_query(question: str, notes: Notes, tools) -> list[tuple[str, int]]:
             return [(f"{bridge} {bridge} {first}", K)]
     if notes.hop == 1 and bridge not in notes.queries:
         return [(bridge, K)]
+    if notes.hop == 0 and notes.attempts[0] == 1 and tools.budget_left()["llm_calls"] >= 4:
+        # Hop 1 found nothing: search with Q1 plus the first sentence of a hypothetical answer passage.
+        passage = hypothetical_passage(subq, tools)
+        if passage:
+            return [(f"{keywords(subq)} {re.split(r'(?<=[.!?])\s', passage)[0]}", K)]
     used = " ".join(notes.queries)
     for p in notes.ranked(notes.hop):
         if p.title not in used:
@@ -549,6 +554,9 @@ def answer(question: str, notes: Notes, tools) -> dict:
         final_text = f"{final} County"  # gold answers to "what county" name it as "X County"
     else:
         final_text = final
+    long_form = re.search(r"\b(\w+)\s*-\s*long\b", final_text)
+    if long_form and re.match(r"\s*how long\b", question, re.I):  # "a month-long affair" -> "month"
+        final_text = long_form.group(1)
     if re.search(r"\bcentur(y|ies)\b", question, re.I):  # gold writes "7th", not "seventh"
         for i, w in enumerate("first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth "
                               "thirteenth fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth "
