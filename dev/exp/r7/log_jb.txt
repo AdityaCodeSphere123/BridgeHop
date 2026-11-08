@@ -1,0 +1,43 @@
+Loading corpus and BM25 index ...
+Running dev/exp/r7/jb_judge_both_questions.py on 300 questions with 8 workers ...
+  10/300 questions  (0s)
+  20/300 questions  (0s)
+  30/300 questions  (0s)
+  40/300 questions  (1s)
+  50/300 questions  (1s)
+  60/300 questions  (1s)
+  70/300 questions  (1s)
+  80/300 questions  (1s)
+  90/300 questions  (1s)
+  100/300 questions  (1s)
+  110/300 questions  (1s)
+  120/300 questions  (1s)
+  130/300 questions  (1s)
+  140/300 questions  (1s)
+  150/300 questions  (1s)
+  160/300 questions  (1s)
+  170/300 questions  (1s)
+  180/300 questions  (2s)
+  190/300 questions  (2s)
+  200/300 questions  (2s)
+  210/300 questions  (2s)
+  220/300 questions  (2s)
+  230/300 questions  (2s)
+  240/300 questions  (2s)
+  250/300 questions  (2s)
+  260/300 questions  (2s)
+  270/300 questions  (2s)
+  280/300 questions  (2s)
+  290/300 questions  (2s)
+  300/300 questions  (2s)
+
+================ results ================
+questions          300
+S (leaderboard)    0.5813   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.5654
+answer EM          0.4867
+evidence F1        0.6450
+mean search calls  4.27
+mean LLM calls     5.22
+status             {'ok': 300}
+outputs            runs/S_jb/
