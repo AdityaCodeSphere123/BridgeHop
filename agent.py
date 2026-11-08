@@ -290,7 +290,7 @@ def read(question: str, notes: Notes, tools) -> None:
             and not title_in(cited, question):
         ans, cited = recheck_weak_bridge(question, notes, tools, context, subq, ans, cited)
     if hop == 1 and notes.attempts[1] == 0:
-        ans, cited = second_opinion(question, notes, tools, context, subq, shown, ans, cited, last_chance)
+        ans, cited = second_opinion(question, notes, tools, context, shown, ans, cited, last_chance)
     if hop == 1:
         ans, cited = memory_check(question, notes, tools, context, subq, question, ans, cited)
     notes.answers[hop] = ans
@@ -379,7 +379,7 @@ def recheck_weak_bridge(question: str, notes: Notes, tools, context: str, subq: 
     return new, shown[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(shown) else None
 
 
-def second_opinion(question: str, notes: Notes, tools, context: str, subq: str, shown: list[Passage],
+def second_opinion(question: str, notes: Notes, tools, context: str, shown: list[Passage],
                    ans: str, cited, last_chance: bool):
     """Check a hop-2 answer with a second read: the same passages in reverse order (the model is sensitive
     to passage order), asked with the original question instead of the plan's Q2 (which can be badly
@@ -402,11 +402,11 @@ def second_opinion(question: str, notes: Notes, tools, context: str, subq: str, 
                 or not fits_type(question, other):
             return ans, cited
         # If the second answer only adds words to the first, keep the first: gold answers are short.
-        # Added date parts are fine ("1810" -> "October 1810").
+        # Added date parts are fine ("1902" -> "June 1902").
         words, more = set(norm(ans).split()), set(norm(other).split())
         if words < more and not all(re.fullmatch(r"\d+|" + MONTHS, w) for w in more - words):
             return ans, cited
-        # The second answer is a piece of the first ("34th" -> "34"): not a real disagreement either.
+        # The second answer is a piece of the first ("12th" -> "12"): not a real disagreement either.
         if norm(other) in norm(ans):
             return ans, cited
         num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
@@ -586,9 +586,9 @@ def answer(question: str, notes: Notes, tools) -> dict:
     else:
         final_text = final
     long_form = re.search(r"\b(\w+)\s*-\s*long\b", final_text)
-    if long_form and re.match(r"\s*how long\b", question, re.I):  # "a month-long affair" -> "month"
+    if long_form and re.match(r"\s*how long\b", question, re.I):  # "a week-long festival" -> "week"
         final_text = long_form.group(1)
-    if re.search(r"\bcentur(y|ies)\b", question, re.I):  # gold writes "7th", not "seventh"
+    if re.search(r"\bcentur(y|ies)\b", question, re.I):  # gold writes "9th", not "ninth"
         for i, w in enumerate("first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth "
                               "thirteenth fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth "
                               "twentieth".split(), 1):
@@ -598,9 +598,9 @@ def answer(question: str, notes: Notes, tools) -> dict:
 
 
 def drop_unit(question: str, ans: str) -> str:
-    """For "how many X" questions keep only the number: "one season" -> "one", "5 times" -> "5".
+    """For "how many X" questions keep only the number: "two seasons" -> "two", "3 times" -> "3".
     Only words that the question already uses are dropped. A number in brackets after a number word
-    is dropped too: "thirty (30)" -> "thirty"."""
+    is dropped too: "twelve (12)" -> "twelve"."""
     ans = re.sub(r"^(\S+)\s*\(\d[\d,.]*\)$", r"\1", ans.strip())
     if not re.match(r"how many\b", question.strip(), re.I):
         return ans
@@ -639,9 +639,9 @@ def final_form(ans: str) -> str:
     one word. Put spaces around hyphens so each part counts. Also drop "over", "about", ... before a
     number, because gold answers are short."""
     ans = ans.replace("*", "").strip()
-    ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "month-long" -> "month"
-    # "Leyton, East London" -> "Leyton": gold answers rarely add a region after a comma.
-    # Dates and numbers ("May 5, 1940", "8,491,079"), lists and abbreviations ("Washington, D.C.") stay.
+    ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "week-long" -> "week"
+    # "Riverton, West Yorkshire" -> "Riverton": gold answers rarely add a region after a comma.
+    # Dates and numbers ("June 3, 1902", "1,234,567"), lists and abbreviations ("Washington, D.C.") stay.
     head, sep, tail = ans.partition(", ")
     if sep and re.match(r"[A-Za-z]", tail) and "." not in tail and not re.search(r"\b(and|or)\b|&", ans):
         ans = head
