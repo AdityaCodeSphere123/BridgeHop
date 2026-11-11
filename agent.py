@@ -45,6 +45,7 @@ class Notes:
         self.rejected: list[str] = []           # hop-2 answers we did not accept, kept as fallbacks
         self.cited: list = [None, None]         # passage the LLM chose for each hop's answer
         self.shown: set[str] = set()            # doc_ids already shown in this hop's reads
+        self.memory_bridge = False              # the bridge came from the model's memory, not a passage
 
     def add(self, query: str, passages: list[Passage]) -> None:
         self.queries.append(query)
@@ -376,6 +377,13 @@ Question: {q}
 Answer:"""
 
 
+BRIDGE_GUESS_PROMPT = """This is one step towards answering: {question}
+Question: {q}
+Answer from your own knowledge with the shortest exact answer (a name or place). Give your best guess; never
+reply unknown.
+Answer:"""
+
+
 # The model's own knowledge is newer than the dataset, so it is not asked about things that change over time.
 TIME_SENSITIVE = re.compile(r"\b(last|latest|most recent|current|currently|now|today|recent)\b", re.I)
 
@@ -566,6 +574,23 @@ def next_query(question: str, notes: Notes, tools) -> list[tuple[str, int]]:
             return [(f"{bridge} {bridge} {first}", K)]
     if notes.hop == 1 and bridge not in notes.queries:
         return [(bridge, K)]
+    if notes.hop == 0 and (notes.attempts[0] >= 2 or tools.budget_left()["llm_calls"] < 4) \
+            and notes.attempts[0] >= 1 and tools.budget_left()["llm_calls"] >= 2 \
+            and tools.budget_left()["search_calls"] >= 1 and tools.budget_left()["seconds"] >= 20:
+        # Two hop-1 reads found nothing in the passages. The model often knows the bridge anyway: ask for it
+        # from memory and go on to hop 2, whose search and read ground the final answer in passages.
+        try:
+            out = tools.llm(BRIDGE_GUESS_PROMPT.format(question=question, q=notes.subqs[0]), max_tokens=24)
+        except (BudgetExhausted, PromptTooLong, LLMError):
+            out = ""
+        guess = clean_answer(re.sub(r"^\s*answer\s*:\s*", "", out, flags=re.I))
+        asked = content_words(question)
+        real_split = len(content_words(notes.subqs[0]) & asked) <= 0.75 * len(asked)  # Q1 is not the whole question
+        if usable(guess) and real_split and "#1" in notes.subqs[1] and not NOT_AN_ENTITY.match(notes.subqs[0]):
+            notes.answers[0], notes.cited[0] = guess, None
+            notes.memory_bridge = True
+            notes.hop, notes.shown = 1, set()
+            return next_query(question, notes, tools)
     if notes.hop == 0 and notes.attempts[0] == 1 and tools.budget_left()["llm_calls"] >= 4:
         # Hop 1 found nothing: search with Q1 plus the first sentence of a hypothetical answer passage.
         passage = hypothetical_passage(subq, tools)
@@ -617,6 +642,14 @@ Reply with the shortest exact answer only (a name, place, date or number), never
 Answer:"""
 
 
+MEMORY_FINAL_PROMPT = """This is the last step towards answering: {question}
+{hint}
+Question: {q}
+Answer from your own knowledge with the shortest exact answer (a name, place, date or number). Give your best
+guess; never reply unknown.
+Answer:"""
+
+
 def answer(question: str, notes: Notes, tools) -> dict:
     """Return the final answer and two citations.
 
@@ -627,10 +660,16 @@ def answer(question: str, notes: Notes, tools) -> dict:
     if not final:
         hint = f"Hint: {notes.subqs[0]} {notes.answers[0]}" if notes.answers[0] else ""
         try:
-            out, shown = call_llm(tools, lambda block: FINAL_PROMPT.format(hint=hint, passages=block,
-                                                                           question=question),
-                                  notes.ranked(1), max_tokens=32, limit=READ_PASSAGES[1])
-            final = clean_answer(out)
+            if notes.answers[0]:
+                # No passage answered hop 2. A clean question answered from memory beats a guess from noisy passages.
+                asked = question
+                out = tools.llm(MEMORY_FINAL_PROMPT.format(question=question, hint=hint, q=asked), max_tokens=32)
+                final = clean_answer(re.sub(r"^\s*answer\s*:\s*", "", out, flags=re.I))
+            else:
+                out, shown = call_llm(tools, lambda block: FINAL_PROMPT.format(hint=hint, passages=block,
+                                                                               question=question),
+                                      notes.ranked(1), max_tokens=32, limit=READ_PASSAGES[1])
+                final = clean_answer(out)
         except (BudgetExhausted, PromptTooLong, LLMError):
             pass
     typed = [a for a in reversed(notes.rejected) if fits_type(question, a)]
@@ -749,6 +788,7 @@ def final_form(ans: str) -> str:
     if group and norm(group.group(1)):  # keep "the people" as it is
         ans = group.group(1)
     ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "week-long" -> "week"
+    ans = re.sub(r"^1\s+(year|month|week|day|hour|decade|century)$", r"\1", ans, flags=re.I)  # "1 month" -> "month"
     # "Riverton, West Yorkshire" -> "Riverton": gold answers rarely add a region after a comma.
     # Dates and numbers ("June 3, 1902", "1,234,567"), lists and abbreviations ("Washington, D.C.") stay.
     head, sep, tail = ans.partition(", ")
@@ -771,7 +811,10 @@ def citations(question: str, final: str, notes: Notes) -> list[str]:
     If one is missing, use the top passage of that hop."""
     bridge = notes.answers[0]
     cits = []
-    if bridge:
+    named = [p for p in notes.ranked(0) if title_in(p, question)]
+    if bridge and notes.memory_bridge and named:
+        cits.append(named[0].doc_id)  # no passage gave the bridge: cite the article the question names
+    elif bridge:
         cits.append(supporting_doc(bridge, notes.cited[0], notes.ranked(0),
                                    prefer=lambda p: title_in(p, question), words=content_words(notes.subqs[0])))
     if final and final != bridge:
