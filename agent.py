@@ -8,7 +8,9 @@ How the agent works (budget: 5 searches and 6 LLM calls per question):
   2. hop 1:  search for Q1, then the LLM reads the passages and gives Q1's answer (the "bridge").
   3. hop 2:  put the bridge into Q2, search again, and let the LLM read the new passages.
              If a read fails, search once more and ask the LLM for its best guess.
+             If hop 1 keeps failing, the bridge is taken from the LLM's own knowledge and hop 2 still searches.
   4. answer: return hop 2's answer and cite two passages: one for the bridge, one for the answer.
+             If hop 2 found nothing, the LLM answers from its own knowledge, with the bridge as a hint.
 """
 
 import re
@@ -391,7 +393,8 @@ TIME_SENSITIVE = re.compile(r"\b(last|latest|most recent|current|currently|now|t
 def memory_check(question: str, notes: Notes, tools, context: str, asked: str, judge_q: str, ans: str, cited):
     """A third, independent opinion: the model answers from its own knowledge, without passages. If that
     answer differs from ours and some retrieved passage contains it, the judge chooses between the two,
-    each shown with its passage. Our answer is option A and wins on any doubt."""
+    each shown with its passage (at hop 2 a spare search may look for such a passage). Our answer is option A
+    and wins on any doubt."""
     left = tools.budget_left()
     if left["llm_calls"] < 2 or left["seconds"] < 20 or TIME_SENSITIVE.search(question):
         return ans, cited
@@ -406,7 +409,7 @@ def memory_check(question: str, notes: Notes, tools, context: str, asked: str, j
         p2 = next((p for p in pool if mentions(p, other)), None)  # only answers that a passage supports
         if p2 is None and notes.hop == 1 and notes.answers[0] and tools.budget_left()["search_calls"] >= 1:
             # No passage has the memory answer yet: spend the spare search on the bridge plus that answer.
-            # The new passage is only used if it names both, so the judge still compares two grounded answers.
+            # The judge is only asked if a new passage contains it, so both options stay grounded in a passage.
             found = tools.search(f"{notes.answers[0]} {other}", k=K)
             notes.add(f"{notes.answers[0]} {other}", found)
             p2 = next((p for p in found if mentions(p, other)), None)
@@ -583,7 +586,8 @@ def next_query(question: str, notes: Notes, tools) -> list[tuple[str, int]]:
     if notes.hop == 0 and (notes.attempts[0] >= 2 or tools.budget_left()["llm_calls"] < 4) \
             and notes.attempts[0] >= 1 and tools.budget_left()["llm_calls"] >= 2 \
             and tools.budget_left()["search_calls"] >= 1 and tools.budget_left()["seconds"] >= 20:
-        # Two hop-1 reads found nothing in the passages. The model often knows the bridge anyway: ask for it
+        # Hop-1 reads found nothing (two failed, or one when there is no budget for Query2doc). The model
+        # often knows the bridge anyway: ask for it
         # from memory and go on to hop 2, whose search and read ground the final answer in passages.
         try:
             out = tools.llm(BRIDGE_GUESS_PROMPT.format(question=question, q=notes.subqs[0]), max_tokens=24)
@@ -659,7 +663,8 @@ Answer:"""
 def answer(question: str, notes: Notes, tools) -> dict:
     """Return the final answer and two citations.
 
-    If hop 2 has no answer, one more LLM call asks for a best guess. An answer of the right type is
+    If hop 2 has no answer, one more LLM call asks for a best guess (from memory if the bridge is known,
+    else from the passages). An answer of the right type is
     preferred. If the reply is still a sentence or "unknown", fall back to a rejected hop-2 answer,
     then to the sentence itself, then to the bridge."""
     final = notes.answers[1]
@@ -668,8 +673,7 @@ def answer(question: str, notes: Notes, tools) -> dict:
         try:
             if notes.answers[0]:
                 # No passage answered hop 2. A clean question answered from memory beats a guess from noisy passages.
-                asked = question
-                out = tools.llm(MEMORY_FINAL_PROMPT.format(question=question, hint=hint, q=asked), max_tokens=32)
+                out = tools.llm(MEMORY_FINAL_PROMPT.format(question=question, hint=hint, q=question), max_tokens=32)
                 final = clean_answer(re.sub(r"^\s*answer\s*:\s*", "", out, flags=re.I))
             else:
                 out, shown = call_llm(tools, lambda block: FINAL_PROMPT.format(hint=hint, passages=block,
