@@ -404,6 +404,12 @@ def memory_check(question: str, notes: Notes, tools, context: str, asked: str, j
             return ans, cited
         pool = notes.ranked(notes.hop)
         p2 = next((p for p in pool if mentions(p, other)), None)  # only answers that a passage supports
+        if p2 is None and notes.hop == 1 and notes.answers[0] and tools.budget_left()["search_calls"] >= 1:
+            # No passage has the memory answer yet: spend the spare search on the bridge plus that answer.
+            # The new passage is only used if it names both, so the judge still compares two grounded answers.
+            found = tools.search(f"{notes.answers[0]} {other}", k=K)
+            notes.add(f"{notes.answers[0]} {other}", found)
+            p2 = next((p for p in found if mentions(p, other)), None)
         p1 = cited if cited is not None and mentions(cited, ans) else \
             next((p for p in pool if mentions(p, ans)), cited)
         if p1 is None or p2 is None:
