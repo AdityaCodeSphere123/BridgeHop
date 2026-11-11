@@ -684,7 +684,7 @@ def extract_guess(question: str, notes: Notes) -> str:
 
 
 def expand_acronym(ans: str, notes: Notes) -> str:
-    """Gold answers spell names out ("ABC" -> "American Broadcasting Company"). Expand a bare acronym if a
+    """Gold answers spell names out ("NFL" -> "National Football League"). Expand a bare acronym if a
     retrieved passage writes "Full Name (ACRONYM)" and the initials of the name's capitalised words match."""
     if not re.fullmatch(r"[A-Z]{2,6}", ans):
         return ans
