@@ -1,0 +1,17 @@
+Loading corpus and BM25 index ...
+Running dev/exp/r8/fq_final_subq.py on 37 questions with 8 workers ...
+  10/37 questions  (2s)
+  20/37 questions  (3s)
+  30/37 questions  (5s)
+  37/37 questions  (5s)
+
+================ results ================
+questions          37
+S (leaderboard)    0.3528   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.3396
+answer EM          0.2703
+evidence F1        0.4054
+mean search calls  4.92
+mean LLM calls     6.00
+status             {'ok': 37}
+outputs            runs/S_fq_part/

@@ -211,17 +211,66 @@ def parse_plan(out: str, question: str):
 
 
 def plan(question: str, notes: Notes, tools) -> None:
-    """Ask for a plan; if it is not usable, ask once more with the second prompt.
+    """Ask for a plan; if it is not usable, ask once more with a second prompt.
     If both fail, both hops keep the original question."""
     first = None
-    for prompt in (PLAN_PROMPT, PLAN_RETRY_PROMPT):
-        parsed = parse_plan(tools.llm(prompt.format(question=question), max_tokens=80), question)
+    prompts = [PLAN_PROMPT, PLAN_RETRY_PROMPT]
+    for k in range(2):
+        out = tools.llm(prompts[k].format(question=question), max_tokens=80)
+        q1 = re.search(r"Q1\s*:\s*(.+)", out)
+        if q1 and NOT_AN_ENTITY.match(q1.group(1)):
+            # Q1 asks for a date or number, so the two hops were merged. Never use this plan, and retry with
+            # examples of such questions.
+            prompts[1] = PLAN_ENTITY_PROMPT
+            continue
+        parsed = parse_plan(out, question)
         if parsed and not wrong_place_type(question, parsed[0]):
             notes.subqs = list(parsed)
             return
         first = first or parsed
     if first:  # the second plan was no better: keep the first one
         notes.subqs = list(first)
+
+
+# The hidden entity is a person, place, group or work, never a date, number or reason (true for every dev question).
+# A plan whose Q1 asks "when" or "how many" is retried with PLAN_ENTITY_PROMPT, which has examples of such questions.
+NOT_AN_ENTITY = re.compile(r"\s*(when|why|how (many|much|long|old)|what year|which year|in what year|in which year|until|"
+                           r"on (which|what) dates?|what date|in (what|which) century)\b", re.I)
+
+PLAN_ENTITY_PROMPT = """Split the question into two simple questions. The second question must refer to the answer \
+of the first one as #1. The first question asks only for the hidden entity (a person, place, group or work), \
+never for a date, a number or a reason.
+
+Question: Who is the spouse of the Green performer?
+Q1: Who is the performer of Green?
+Q2: Who is the spouse of #1?
+
+Question: When was the institute that owned The Collegian founded?
+Q1: Which institute owned The Collegian?
+Q2: When was #1 founded?
+
+Question: What county contains the city where Walter Robinson was born?
+Q1: In which city was Walter Robinson born?
+Q2: Which county contains #1?
+
+Question: Who founded the record label of the performer of Me and My Monkey?
+Q1: Who is the performer of Me and My Monkey?
+Q2: Who founded the record label of #1?
+
+Question: When did the trams stop running in the city where Clara Voss died?
+Q1: In which city did Clara Voss die?
+Q2: When did the trams stop running in #1?
+
+Question: How many times did the team Owen Tallis plays for win the league?
+Q1: Which team does Owen Tallis play for?
+Q2: How many times did #1 win the league?
+
+Question: Westbrook, in the state where Fennel Ridge is set, is part of which county?
+Q1: In which state is Fennel Ridge set?
+Q2: Westbrook, in #1, is part of which county?
+
+Question: {question}
+"""
 
 
 PLACE_TYPES = r"\b(country|state|county|province|city|town|region|district|continent|parish)\b"

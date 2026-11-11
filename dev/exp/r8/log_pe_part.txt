@@ -1,0 +1,15 @@
+Loading corpus and BM25 index ...
+Running dev/exp/r8/pe_entity_retry_all.py on 15 questions with 8 workers ...
+  10/15 questions  (4s)
+  15/15 questions  (5s)
+
+================ results ================
+questions          15
+S (leaderboard)    0.5200   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.5000
+answer EM          0.4667
+evidence F1        0.6000
+mean search calls  3.87
+mean LLM calls     5.53
+status             {'ok': 15}
+outputs            runs/S_pe_part/
