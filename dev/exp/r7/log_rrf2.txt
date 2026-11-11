@@ -1,0 +1,43 @@
+Loading corpus and BM25 index ...
+Running dev/exp/r7/rrf2.py on 300 questions with 8 workers ...
+  10/300 questions  (1s)
+  20/300 questions  (3s)
+  30/300 questions  (5s)
+  40/300 questions  (7s)
+  50/300 questions  (9s)
+  60/300 questions  (13s)
+  70/300 questions  (14s)
+  80/300 questions  (17s)
+  90/300 questions  (19s)
+  100/300 questions  (21s)
+  110/300 questions  (23s)
+  120/300 questions  (23s)
+  130/300 questions  (25s)
+  140/300 questions  (26s)
+  150/300 questions  (28s)
+  160/300 questions  (29s)
+  170/300 questions  (30s)
+  180/300 questions  (32s)
+  190/300 questions  (34s)
+  200/300 questions  (36s)
+  210/300 questions  (38s)
+  220/300 questions  (39s)
+  230/300 questions  (42s)
+  240/300 questions  (43s)
+  250/300 questions  (47s)
+  260/300 questions  (49s)
+  270/300 questions  (51s)
+  280/300 questions  (52s)
+  290/300 questions  (56s)
+  300/300 questions  (59s)
+
+================ results ================
+questions          300
+S (leaderboard)    0.6108   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.5993
+answer EM          0.5300
+evidence F1        0.6567
+mean search calls  4.35
+mean LLM calls     5.23
+status             {'ok': 300}
+outputs            runs/S_rrf2/

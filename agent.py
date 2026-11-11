@@ -590,6 +590,8 @@ def answer(question: str, notes: Notes, tools) -> dict:
     if not usable(final):
         sentence = final if final and not is_unknown(final) else ""
         final = (notes.rejected or [sentence or notes.answers[0]])[-1]
+    if not usable(final) or re.match(r"(not available|not known|no one|nobody)\b", norm(final)):
+        final = extract_guess(question, notes) or final  # an empty answer always scores 0
     if re.search(r"\b(what|which)\s+(other\s+)?county\b", question, re.I) and final \
             and not re.search(r"\b(county|parish|borough|shire)\b", final, re.I):
         final_text = f"{final} County"  # gold answers to "what county" name it as "X County"
@@ -604,7 +606,47 @@ def answer(question: str, notes: Notes, tools) -> dict:
                               "twentieth".split(), 1):
             suffix = "th" if 10 < i < 14 else {1: "st", 2: "nd", 3: "rd"}.get(i % 10, "th")
             final_text = re.sub(rf"\b{w}\b", f"{i}{suffix}", final_text, flags=re.I)
-    return {"answer": final_form(drop_unit(question, final_text)), "citations": citations(question, final, notes)}
+    answer_text = final_form(drop_unit(question, expand_acronym(final_text, notes)))
+    return {"answer": answer_text, "citations": citations(question, final, notes)}
+
+
+def extract_guess(question: str, notes: Notes) -> str:
+    """Last resort when every read failed, with no LLM call: from the passage that shares most words with the
+    question, take a span of the right type (a date for "when", a number for "how many"), else its title.
+    Any guess scores at least as much as an empty answer."""
+    pool = notes.ranked(1)[:10] if notes.answers[0] else notes.ranked(0)[:10]
+    words = content_words(question)
+    pool = sorted(pool, key=lambda p: -overlap(p, words))
+    q = question.lower().strip()
+    if re.match(r"(when|what year|which year|in what year|in which year|what date)\b", q):
+        span = re.compile(r"\b(?:(?:\d{1,2}\s+)?(?:" + MONTHS + r")(?:\s+\d{1,2})?,?\s+\d{4}|"
+                          r"\d{1,2}(?:st|nd|rd|th)\s+centur(?:y|ies)|1\d{3}s?|20\d{2}s?)\b", re.I)
+    elif re.match(r"how (many|much|old|long|tall|high|big)\b", q) or re.search(r"\b(population|number of)\b", q):
+        span = re.compile(r"\b\d[\d,.]*\d\b|\b\d\b")
+    else:
+        span = None
+    for p in pool:
+        m = span.search(p.text) if span else None
+        if m:
+            return m.group(0)
+        if span is None and not title_in(p, question):
+            return re.sub(r"\s*\([^)]*\)\s*$", "", p.title)
+    return ""
+
+
+def expand_acronym(ans: str, notes: Notes) -> str:
+    """Gold answers spell names out ("ABC" -> "American Broadcasting Company"). Expand a bare acronym if a
+    retrieved passage writes "Full Name (ACRONYM)" and the initials of the name's capitalised words match."""
+    if not re.fullmatch(r"[A-Z]{2,6}", ans):
+        return ans
+    for p in notes.passages.values():
+        for m in re.finditer(r"((?:[A-Z][\w'&-]*\s+(?:of\s+|and\s+|for\s+|the\s+)?){1,7})\(" + ans + r"\)", p.text):
+            words = m.group(1).split()
+            while words:  # drop leading words that are not part of the name
+                if "".join(w[0] for w in words if w[0].isupper()) == ans:
+                    return " ".join(words)
+                words = words[1:]
+    return ans
 
 
 def drop_unit(question: str, ans: str) -> str:
