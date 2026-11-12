@@ -85,9 +85,10 @@ def norm(s: str) -> str:
 
 
 def mentions(p: Passage, phrase: str) -> bool:
-    """True if the passage's title or text contains the phrase."""
+    """True if the passage's title or text contains the phrase. A "/" counts as a space, because norm() would
+    glue "Town/County" into one word."""
     phrase = norm(phrase)
-    return bool(phrase) and f" {phrase} " in f" {norm(p.title + ' ' + p.text)} "
+    return bool(phrase) and f" {phrase} " in f" {norm((p.title + ' ' + p.text).replace('/', ' '))} "
 
 
 def is_unknown(ans: str) -> bool:
@@ -207,6 +208,8 @@ def parse_plan(out: str, question: str):
     if not (q1 and q2 and "#1" in q2.group(1)):
         return None
     q1, q2 = q1.group(1).strip(), q2.group(1).strip()
+    if "#1" in q1:  # Q1 cannot refer to its own answer
+        return None
     asked = content_words(question)
     if asked and len(content_words(q1) & asked) >= PLAN_MAX_OVERLAP * len(asked):
         return None
@@ -352,9 +355,11 @@ def read(question: str, notes: Notes, tools) -> None:
             and not title_in(cited, question):
         ans, cited = recheck_weak_bridge(question, notes, tools, context, subq, ans, cited)
     if hop == 1 and notes.attempts[1] == 0 and cited is not None and not mentions(cited, ans) \
-            and any(mentions(p, ans) for p in shown):
+            and any(mentions(p, ans) for p in shown) \
+            and tools.budget_left()["llm_calls"] >= 2 and len(shown) >= 2:
         # The cited passage lacks the answer although another passage has it: the model mixed up its
         # evidence. Ask for a second opinion first; if it only confirms the doubtful answer, search again.
+        # Only when there are calls left for that second opinion: without them it would "confirm" every answer.
         checked, checked_cited = second_opinion(question, notes, tools, context, shown, ans, cited, last_chance)
         if norm(checked) == norm(ans):
             notes.attempts[1] += 1
