@@ -814,6 +814,13 @@ def usable(ans: str) -> bool:
     return bool(ans) and not is_unknown(ans) and len(ans.split()) <= MAX_ANSWER_WORDS
 
 
+def named_in(p: Passage, question: str) -> bool:
+    """title_in, but a hyphen counts as a space, so the article "Silver-tail ferry" is found for a question
+    that writes "Silver tail ferry". Used only to choose citations."""
+    dash = lambda s: re.sub(r"[-–—]", " ", s)
+    return title_in(p, question) or title_in(Passage(p.doc_id, dash(p.title), p.text, 0.0), dash(question))
+
+
 def citations(question: str, final: str, notes: Notes) -> list[str]:
     """Cite two passages, chosen after all searches:
     - the bridge passage: contains the bridge, preferably the article named in the question;
@@ -821,12 +828,12 @@ def citations(question: str, final: str, notes: Notes) -> list[str]:
     If one is missing, use the top passage of that hop."""
     bridge = notes.answers[0]
     cits = []
-    named = [p for p in notes.ranked(0) if title_in(p, question)]
+    named = [p for p in notes.ranked(0) if named_in(p, question)]
     if bridge and notes.memory_bridge and named:
         cits.append(named[0].doc_id)  # no passage gave the bridge: cite the article the question names
     elif bridge:
         cits.append(supporting_doc(bridge, notes.cited[0], notes.ranked(0),
-                                   prefer=lambda p: title_in(p, question), words=content_words(notes.subqs[0])))
+                                   prefer=lambda p: named_in(p, question), words=content_words(notes.subqs[0])))
     if final and final != bridge:
         cits.append(supporting_doc(final, notes.cited[1], notes.ranked(1), avoid=cits[0] if cits else None,
                                    prefer=lambda p: bool(bridge) and mentions(p, bridge),
@@ -837,7 +844,7 @@ def citations(question: str, final: str, notes: Notes) -> list[str]:
             break
         pool = notes.ranked(hop)
         if hop == 0:  # for hop 1, try the article named in the question first
-            pool = [p for p in pool if title_in(p, question)] + pool
+            pool = [p for p in pool if named_in(p, question)] + pool
         for p in pool:
             if p.doc_id not in cits:
                 cits.append(p.doc_id)

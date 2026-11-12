@@ -125,7 +125,7 @@ Dev set, 300 questions & EM & Ans.\ F1 & Ev.\ F1 & $S$ & Search & LLM\\
 \midrule
 B1 single-shot (starter) & 0.1400 & 0.2110 & 0.3717 & 0.2431 & 1.00 & 1.00\\
 B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.03\\
-\textbf{My agent (final, leaderboard)} & \textbf{0.5533} & \textbf{0.6311} & \textbf{0.6567} & \textbf{0.6362} & 4.32 & 5.19\\
+\textbf{My agent (final, leaderboard)} & \textbf{0.5533} & \textbf{0.6328} & \textbf{0.6600} & \textbf{0.6382} & 4.41 & 5.23\\
 \bottomrule
 \end{tabular}
 \captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search/LLM = mean calls per question.}
@@ -138,9 +138,9 @@ B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.
 \toprule
 Diagnostic & B1 & Mine\\
 \midrule
-both gold paragraphs retrieved & 15.3\% & 68.3\%\\
-hop-2 paragraph retrieved & 23.3\% & 71.7\%\\
-bridge (hop-1 answer) correct & -- & 75.0\%\\
+both gold paragraphs retrieved & 15.3\% & 68.7\%\\
+hop-2 paragraph retrieved & 23.3\% & 72.3\%\\
+bridge (hop-1 answer) correct & -- & 76.7\%\\
 gold paragraphs cited (of 2) & 0.74 & 1.32\\
 \bottomrule
 \end{tabular}
@@ -149,7 +149,7 @@ gold paragraphs cited (of 2) & 0.74 & 1.32\\
 
 \vspace{2pt}
 Single-shot retrieval finds the hop-2 paragraph for only 23\% of questions, because the question never names
-the bridge entity; once the bridge is known and searched for, this rises to 71\%. All 300 ran \texttt{ok} within budget.
+the bridge entity; once the bridge is known and searched for, this rises to 72\%. All 300 ran \texttt{ok} within budget.
 
 % =====================================================================
 \section{Design}
@@ -187,13 +187,13 @@ Acronyms are spelled out from the passages (\emph{ABC}$\to$\emph{American Broadc
   xmin=0.49, xmax=0.648, xtick={0.50,0.52,0.54,0.56,0.58,0.60,0.62},
   xticklabel style={font=\scriptsize,/pgf/number format/fixed,/pgf/number format/precision=2},
   yticklabel style={font=\scriptsize}, xlabel={dev $S$}, xlabel style={font=\scriptsize},
-  symbolic y coords={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s}, ytick={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s}, y dir=reverse,
+  symbolic y coords={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t}, ytick={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t}, y dir=reverse,
   yticklabels={first iterative agent, +answer fallbacks\,\&\,citations, +$k{=}10$\,/\,RRF\,/\,retries,
-    +plan check \& retry prompt, +topic article first, +output formatting, +clean-up \& citation words, +second read \& judge, +original question in judge, +memory\,/\,plan\,/\,format fixes, +Query2doc retry (\emph{when}), +Query2doc retry (hop~1), +weak-bridge recheck, +whole passages, +\emph{for}/\emph{people} rules, +mixed-up evidence check, +acronyms \& empty-answer guess, +no date/number Q1, +memory fallbacks},
+    +plan check \& retry prompt, +topic article first, +output formatting, +clean-up \& citation words, +second read \& judge, +original question in judge, +memory\,/\,plan\,/\,format fixes, +Query2doc retry (\emph{when}), +Query2doc retry (hop~1), +weak-bridge recheck, +whole passages, +\emph{for}/\emph{people} rules, +mixed-up evidence check, +acronyms \& empty-answer guess, +no date/number Q1, +memory fallbacks, +grounded memory \& title match},
   enlarge y limits=0.1, xmajorgrids=true, major grid style={gray!22}, axis line style={gray!70},
   nodes near coords, nodes near coords style={font=\scriptsize,/pgf/number format/fixed,
     /pgf/number format/fixed zerofill,/pgf/number format/precision=4}]
-\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,c) (0.5402,d) (0.5441,e) (0.5576,g) (0.5667,h) (0.5757,i) (0.5896,j) (0.5959,k) (0.5992,l) (0.6182,n) (0.6207,o) (0.6234,p) (0.6277,q) (0.6304,r) (0.6362,s)};
+\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,c) (0.5402,d) (0.5441,e) (0.5576,g) (0.5667,h) (0.5757,i) (0.5896,j) (0.5959,k) (0.5992,l) (0.6182,n) (0.6207,o) (0.6234,p) (0.6277,q) (0.6304,r) (0.6362,s) (0.6382,t)};
 \addplot[fill=cC!45, draw=cC, line width=0.4pt] coordinates {(0.5165,b) (0.5521,f) (0.6021,m)};
 \end{axis}
 \end{tikzpicture}
@@ -246,7 +246,7 @@ total & 258 & 178 & 163\\
 because the bridge is now searched for. Category (iii) grew from 15 to 50 for the same reason: far more
 questions now reach the final read with both gold paragraphs in the prompt (46 for B1, 203 now), and there
 the 4B reader reaches an answer F1 of only 0.70. The plan fix and the passage ordering
-attacked (i); the judge and memory steps attack (iii): on the server the final agent has (iii)~41 (total 163$\to$137).
+attacked (i); the judge and memory steps attack (iii): on the server the final agent has (iii)~40 (total 163$\to$134).
 Reading errors remain the largest class.
 \end{minipage}
 
