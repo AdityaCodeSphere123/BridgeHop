@@ -210,7 +210,17 @@ def parse_plan(out: str, question: str):
     asked = content_words(question)
     if asked and len(content_words(q1) & asked) >= PLAN_MAX_OVERLAP * len(asked):
         return None
+    if copied_example(q1, question) or copied_example(q2, question):
+        return None
     return q1, q2
+
+
+def copied_example(sub: str, question: str) -> bool:
+    """True if a sub-question is one of the prompts' example sub-questions and asks about something the
+    question never mentions (the model copied an example instead of splitting the question)."""
+    examples = {norm(m) for prompt in (PLAN_PROMPT, PLAN_RETRY_PROMPT, PLAN_ENTITY_PROMPT)
+                for m in re.findall(r"Q[12]: (.+)", prompt.split("{question}")[0])}
+    return norm(sub) in examples and not content_words(sub.replace("#1", "")) <= content_words(question)
 
 
 def plan(question: str, notes: Notes, tools) -> None:
