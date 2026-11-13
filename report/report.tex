@@ -148,8 +148,8 @@ gold paragraphs cited (of 2) & 0.74 & 1.33\\
 \end{minipage}
 
 \vspace{2pt}
-Single-shot retrieval finds the hop-2 paragraph for only 23\% of questions, because the question never names
-the bridge entity; once the bridge is known and searched for, this rises to 72\%. All 300 ran \texttt{ok} within budget.
+Single-shot retrieval finds the hop-2 paragraph for only 23\% of questions, as the question never names
+the bridge; once it is searched for, this rises to 72\%. A fresh run (13 Nov) reproduces my row exactly: 300 \texttt{ok}, slowest 6.4\,s.
 
 % =====================================================================
 \section{Design}
@@ -166,10 +166,10 @@ article (38\% right) is read once more after a Query2doc search for Q1. After tw
 with the original question instead of Q2, which the plan sometimes words badly. If the answers really differ, one
 call shows both with their passages and asks \emph{``A or B?''}; the first answer is A and wins on doubt. If the answer is in another passage than the one cited, a
 second opinion that only confirms it sends hop~2 back to search (if calls remain for that opinion). With calls
-to spare, the model also answers Q2 from memory; if a retrieved passage holds that answer, the judge decides again.
+to spare, the model also answers Q2 from memory; if a passage (retrieved, or from a spare search) holds it, the judge decides again.
 
-\textbf{\texttt{should\_stop}.} Stop as soon as hop~2 has an answer that is not \emph{unknown} and does not
-just repeat the bridge, or when only one LLM call is left (reserved for \texttt{answer}) or under 15\,s remain.
+\textbf{\texttt{should\_stop}.} Stop once hop~2 has an answer that is not \emph{unknown}, is not the bridge and
+has the asked type (e.g.\ a date for \emph{when}), or when one LLM call is left (kept for \texttt{answer}) or under 15\,s remain.
 
 \textbf{\texttt{answer}.} Hop~2's answer; else one forced best-guess call (from memory, with the bridge as hint), then fallbacks. Hyphens are spaced (\emph{2001-02-13}$\to$\emph{2001 - 02 - 13}), as
 the scorer deletes punctuation, and a hedge before a number is dropped. \textbf{Citations} are chosen after all searches: the passage that mentions the bridge (preferring
@@ -216,37 +216,37 @@ every question: recall 79$\to$88\% but it took the judge's budget) lost or tied.
 
 % =====================================================================
 \section{Error analysis}
-Before the judge step, 163 of the 300 dev questions had EM $=0$. \texttt{dev/analyze.py} labels them automatically:
-(i)~43, (ii)~16, (iii)~50, (iv)~41, (v)~13. Many (iv) cases already get partial credit, e.g.\ \emph{August 5,
+In the fresh run of the final agent, 133 of the 300 dev questions have EM $=0$. \texttt{dev/analyze.py} labels them automatically:
+(i)~32, (ii)~11, (iii)~39, (iv)~42, (v)~9. Many (iv) cases already get partial credit, e.g.\ \emph{August 5,
 1940} vs.\ \emph{5 August 1940} has F1 1.0 but EM 0. I checked the traces of 10 wrong questions by hand
-(Table~\ref{tab:err}); they match the automatic labels except for Berthelot and Levinson.
+(Table~\ref{tab:err}); they match the automatic labels except Berthelot, labelled (iii) because both gold paragraphs were retrieved, although the bridge was wrong.
 
 \begin{minipage}[t]{0.47\textwidth}
 \vspace{0pt}
 \centering\footnotesize
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-Errors (EM $=0$), automatic labels & B1 & first iter. & final\\
+Errors (EM $=0$), auto labels & B1 & first & no judge & final\\
 \midrule
-(i) bridge entity not found & 191 & 61 & 43\\
-(ii) stopped too early & 0 & 20 & 16\\
-(iii) evidence retrieved, answered wrongly & 15 & 36 & 50\\
-(iv) correct but marked wrong & 52 & 45 & 41\\
-(v) other & 0 & 16 & 13\\
+(i) bridge entity not found & 191 & 61 & 43 & 32\\
+(ii) stopped too early & 0 & 20 & 16 & 11\\
+(iii) evidence retrieved, wrong answer & 15 & 36 & 50 & 39\\
+(iv) correct but marked wrong & 52 & 45 & 41 & 42\\
+(v) other & 0 & 16 & 13 & 9\\
 \midrule
-total & 258 & 178 & 163\\
+total & 258 & 178 & 163 & 133\\
 \bottomrule
 \end{tabular}
-\captionof{table}{Error categories on all 300 dev questions (final: before the judge step).}
+\captionof{table}{Error categories on all 300 dev questions: B1, the first iterative agent, the agent before the judge step, and the final agent.}
 \label{tab:cats}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.505\textwidth}
 \vspace{0pt}
-\textbf{The bottleneck moved from retrieval to reading.} Iterating cut bridge failures (i) from 191 to 43,
-because the bridge is now searched for. Category (iii) grew from 15 to 50 for the same reason: far more
-questions now reach the final read with both gold paragraphs in the prompt (46 for B1, 203 now), and there
-the 4B reader reaches an answer F1 of only 0.70. The plan fix and the passage ordering
-attacked (i); the judge and memory steps attack (iii): on the server the final agent has (iii)~39 (total 163$\to$133).
+\textbf{The bottleneck moved from retrieval to reading.} Iterating cut bridge failures (i) from 191 to 32,
+because the bridge is now searched for. Category (iii) grew from 15 to 39 for the same reason: far more
+questions now reach the final read with both gold paragraphs retrieved (46 for B1, 206 now), and there
+the 4B reader reaches an answer F1 of only 0.77 (B1: 0.54). The plan fix and the passage ordering
+attacked (i); the judge and memory steps attack (iii), which fell from 50 to 39 (total 163$\to$133).
 Reading errors remain the largest class.
 \end{minipage}
 
@@ -256,37 +256,35 @@ Reading errors remain the largest class.
 \toprule
 & Question (shortened) & Gold & Mine & What went wrong\\
 \midrule
-(i) & Last time Auburn won in the work location of Johnny Berthelot? & 1999 & 2017 & bridge \emph{Gonzales} (hometown), not \emph{Baton Rouge}\\
-(i) & Sibling of the composer of \emph{Downtown}? & Astrid Young & Virginia & bridge \emph{Warner} (the label), not Neil Young\\
-(i) & Record label of \emph{Trouble}'s performer? & RCA Records & Motown & ambiguous title: Marvin Gaye, not Ray LaMontagne\\
-(ii) & Birth county of Norman Levinson? & Essex County & Massachusetts & bridge Lynn right; a \emph{state} accepted for ``county''\\
-(ii) & Manager when Tommy Logan's team won the Champions League? & Roberto Di Matteo & Jos\'e Mourinho & bridge Chelsea right; hop-2 paragraph never retrieved\\
-(iii) & Who is part of the band that performed \emph{English Settlement}? & Andy Partridge & XTC & Q2 became ``part of the band that performed XTC''\\
-(iii) & Where did the 2007 World Series winner get Brandon Phillips from? & Los Angeles Angels & Cincinnati Reds & right passages, wrong team read\\
-(iv) & When did Chopin's family move to the city Eisenhower visited in 1945? & October 1810 & 1810 & correct but shorter span (F1 0.67)\\
+(i) & Last time Auburn won in the work location of Johnny Berthelot? & 1999 & 1994 & bridge \emph{Gonzales} (hometown), not \emph{Baton Rouge}\\
+(i) & Sibling of the composer of \emph{Downtown}? & Astrid Young & Michael Gore & bridge \emph{Luke Laird} (another \emph{Downtown}), not Neil Young\\
+(i) & When did the civil war start in the country Ita Ford is from? & October 15, 1979 & April 1861 & bridge \emph{United States} (her nationality), not El Salvador\\
+(ii) & Manager when Tommy Logan's team won the Champions League? & Roberto Di Matteo & Jos\'e Mourinho & bridge Chelsea right; stopped with a search left, hop-2 paragraph never retrieved\\
+(ii) & When did Harrysong's country become a member of OPEC? & 1971 & the 1970s & bridge Nigeria right; vague answer accepted, OPEC table never retrieved\\
+(iii) & Where did the 2007 World Series winner get Brandon Phillips from? & Los Angeles Angels & Cleveland Indians & both gold paragraphs retrieved, wrong team read\\
+(iii) & Average household size in the city served by WAJM? & 2.46 & 2.50 & second read found 2.46; the judge kept 2.50 (2000 census)\\
 (iv) & Country of Saldus Municipality joined the Soviet Union when? & 5 August 1940 & August 5, 1940 & same date, other order (F1 1.0, EM 0)\\
-(v) & Who was targeted for defrauding the electoral process, in Hotel Courtland's state? & a whole sentence & Senator Boxer & gold answer is a sentence; question ill-posed\\
+(iv) & Forest by the southern border of Jerzy Passendorfer's death city? & Kabaty & Kabaty Forest & correct, extra word (F1 0.67)\\
+(v) & Who was targeted for defrauding the electoral process, in Hotel Courtland's state? & a whole sentence & John Kerry & gold answer is a sentence; question ill-posed\\
 \bottomrule
 \end{tabularx}
-\captionof{table}{Ten hand-labelled errors: (i) bridge not found 3, (ii) stopped too early 2, (iii) evidence
+\captionof{table}{Ten hand-labelled errors of the final agent: (i) bridge not found 3, (ii) stopped too early 2, (iii) evidence
 retrieved but answered wrongly 2, (iv) correct but marked wrong 2, (v) other 1.}
 \label{tab:err}
 \end{center}
 
-\textbf{Example 1 (i), Johnny Berthelot.} The plan is right (Q1: \emph{What is the work location of Johnny
-Berthelot?}) and the gold paragraph is ranked first, but it says he is \emph{a member of the Louisiana House of
-Representatives from District~88, based in his hometown of Gonzales}. The model returns the explicit city;
-the intended bridge, Baton Rouge, is only implied (the seat of the Louisiana legislature). Every later step
-then searches Auburn's results \emph{at Gonzales}, all three hop-2 reads say \emph{unknown}, and the forced
-final guess is wrong. Multi-hop errors start at the bridge: with a wrong bridge my answer F1 is 0.03 when the
-hop-2 paragraph is missing, against 0.72 with the right bridge and the paragraph found.
+\textbf{Example 1 (i), Johnny Berthelot.} The plan is right and the gold paragraph is ranked first, but it says
+he is \emph{a member of the Louisiana House of Representatives \dots\ based in his hometown of Gonzales}. The model
+returns the explicit city; the intended bridge, Baton Rouge (the seat of the legislature), is only implied. Hop~2
+asks about Auburn's wins \emph{at Gonzales}: the first read says \emph{unknown}, and the best-guess read takes
+\emph{1994} from the gold Auburn--LSU table, which was retrieved, but 1994 is a win \emph{at Auburn, AL}; the last
+win at Baton Rouge is 1999. Errors start at the bridge: with a wrong bridge and no hop-2 paragraph my answer F1 is
+0.15 ($n{=}39$), against 0.79 ($n{=}189$) with the right bridge and the paragraph found.
 
-\textbf{Example 2 (ii), Norman Levinson.} Hop~1 finds \emph{Lynn} (the passage says \emph{born in Lynn,
-Massachusetts}), and the hop-2 read answers \emph{Massachusetts}, a state, for a question about a county.
-\texttt{should\_stop} accepts any answer that is not \emph{unknown}, so the agent stops with one search and
-three LLM calls unused. Two cheap fixes follow: keep the bridge's qualifier (\emph{Lynn, Massachusetts}; a
-search for plain \emph{Lynn} returns Loretta Lynn), and check the answer type (a ``county'' question needs an
-answer naming a county) before stopping.
+\textbf{Example 2 (iii), WAJM.} Bridge (\emph{Atlantic City}) and both gold paragraphs are found. Two
+near-identical, undated census paragraphs of that article give 2.50 and 2.46 (gold). The first read answers 2.50,
+the second read (reversed passages, original question) 2.46, and the judge keeps A (2.50): it keeps the first
+answer on any doubt, so between two equally plausible passages the higher-ranked one wins.
 
 % =====================================================================
 \section{AI-use disclosure and code provenance}
@@ -295,7 +293,7 @@ scripts in \texttt{dev/}, run the experiments and draft this report. I chose wha
 I checked the numbers; I am responsible for the submission. No external code was copied. The loop follows IRCoT
 (Trivedi et al., ACL 2023) and ReAct (Yao et al., ICLR 2023); reciprocal rank fusion follows Cormack, Clarke and
 Buettcher (SIGIR 2009); the data is MuSiQue (Trivedi et al., TACL 2022). BM25, the tools and the scorer are the
-course's \texttt{a4} package. The few-shot examples in the prompts are invented and appear nowhere in the
-dev set or corpus.
+course's \texttt{a4} package. The few-shot examples in the prompts were written by hand; they contain no
+answers and none of them is a dev question.
 
 \end{document}
