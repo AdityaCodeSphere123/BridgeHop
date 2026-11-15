@@ -154,40 +154,35 @@ Question: {question}
 """
 
 # Second try when the first plan is bad: the model first names the hidden entity.
-# The examples are made up.
+# All names in the examples are made up.
 PLAN_RETRY_PROMPT = """Each question hides one unnamed entity, described by a phrase like "the birthplace \
 of X" or "X's team". Name that phrase, then write Q1, asking only for the hidden entity, and Q2, the rest of \
 the question, with #1 for Q1's answer. Q1 must never ask the whole question.
 
-Question: How many titles did Rafe Holloway's club win?
-Hidden entity: Rafe Holloway's club
-Q1: Which club did Rafe Holloway play for?
-Q2: How many titles did #1 win?
+Question: Where did the author of The Copper Orchard go to university?
+Hidden entity: the author of The Copper Orchard
+Q1: Who wrote The Copper Orchard?
+Q2: Where did #1 go to university?
 
-Question: When did trams stop running in the birthplace of Edith Marlow?
-Hidden entity: the birthplace of Edith Marlow
-Q1: Where was Edith Marlow born?
-Q2: When did trams stop running in #1?
+Question: Who directed the film in which Mara Ellison made her debut?
+Hidden entity: the film in which Mara Ellison made her debut
+Q1: In which film did Mara Ellison make her debut?
+Q2: Who directed #1?
 
-Question: When did the river on which Kessler Dam is located flood?
-Hidden entity: the river on which Kessler Dam is located
-Q1: On which river is Kessler Dam located?
-Q2: When did #1 flood?
+Question: What is the capital of the country where the Velden Pass is located?
+Hidden entity: the country where the Velden Pass is located
+Q1: In which country is the Velden Pass located?
+Q2: What is the capital of #1?
 
-Question: In which county of the state where The Quiet Harvest is set is Brookfield?
-Hidden entity: the state where The Quiet Harvest is set
-Q1: In which state is The Quiet Harvest set?
-Q2: In which county of #1 is Brookfield?
+Question: How many employees does the company that makes the Arlo Nine have?
+Hidden entity: the company that makes the Arlo Nine
+Q1: Which company makes the Arlo Nine?
+Q2: How many employees does #1 have?
 
-Question: When did the network that aired Sunday Garden stop showing cartoons?
-Hidden entity: the network that aired Sunday Garden
-Q1: Which network aired Sunday Garden?
-Q2: When did #1 stop showing cartoons?
-
-Question: How many hits did the original singer of Paper Lantern have?
-Hidden entity: the original singer of Paper Lantern
-Q1: Who was the original singer of Paper Lantern?
-Q2: How many hits did #1 have?
+Question: When was Dorian Kell's employer founded?
+Hidden entity: Dorian Kell's employer
+Q1: Who employed Dorian Kell?
+Q2: When was #1 founded?
 
 Question: {question}
 """
@@ -272,17 +267,17 @@ Question: Who founded the record label of the performer of Me and My Monkey?
 Q1: Who is the performer of Me and My Monkey?
 Q2: Who founded the record label of #1?
 
-Question: When did the trams stop running in the city where Clara Voss died?
-Q1: In which city did Clara Voss die?
-Q2: When did the trams stop running in #1?
+Question: When did the university attended by Selma Okoro open?
+Q1: Which university did Selma Okoro attend?
+Q2: When did #1 open?
 
-Question: How many times did the team Owen Tallis plays for win the league?
-Q1: Which team does Owen Tallis play for?
-Q2: How many times did #1 win the league?
+Question: How many people live in the city where Brannick Foods has its headquarters?
+Q1: In which city does Brannick Foods have its headquarters?
+Q2: How many people live in #1?
 
-Question: Westbrook, in the state where Fennel Ridge is set, is part of which county?
-Q1: In which state is Fennel Ridge set?
-Q2: Westbrook, in #1, is part of which county?
+Question: What year was the director of Night at Corrow Bay born?
+Q1: Who directed Night at Corrow Bay?
+Q2: What year was #1 born?
 
 Question: {question}
 """
@@ -702,15 +697,6 @@ def answer(question: str, notes: Notes, tools) -> dict:
         final_text = f"{final} County"  # the question asks for a county: name it as one
     else:
         final_text = final
-    long_form = re.search(r"\b(\w+)\s*-\s*long\b", final_text)
-    if long_form and re.match(r"\s*how long\b", question, re.I):  # "a week-long festival" -> "week"
-        final_text = long_form.group(1)
-    if re.search(r"\bcentur(y|ies)\b", question, re.I):  # write ordinals as digits: "9th", not "ninth"
-        for i, w in enumerate("first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth "
-                              "thirteenth fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth "
-                              "twentieth".split(), 1):
-            suffix = "th" if 10 < i < 14 else {1: "st", 2: "nd", 3: "rd"}.get(i % 10, "th")
-            final_text = re.sub(rf"\b{w}\b", f"{i}{suffix}", final_text, flags=re.I)
     answer_text = final_form(drop_unit(question, expand_acronym(final_text, notes)))
     return {"answer": answer_text, "citations": citations(question, final, notes)}
 
@@ -788,17 +774,8 @@ def fits_type(question: str, ans: str) -> bool:
 
 def final_form(ans: str) -> str:
     """Format the answer for the scorer, which deletes punctuation: put spaces around hyphens
-    so "1987-06-30" stays three words. Also trim extra words that a short answer does not need."""
+    so "1987-06-30" stays three words. Also drop a trailing region or a hedge word before a number."""
     ans = ans.replace("*", "").strip()
-    # "trade guild for weavers" -> "trade guild"; "the Norse people" -> "the Norse"
-    head, sep, _ = ans.partition(" for ")
-    if sep and len(head.split()) >= 2 and not re.search(r"\d", ans):
-        ans = head
-    group = re.match(r"(.+?)\s+people$", ans, re.I)
-    if group and norm(group.group(1)):  # keep "the people" as it is
-        ans = group.group(1)
-    ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "week-long" -> "week"
-    ans = re.sub(r"^1\s+(year|month|week|day|hour|decade|century)$", r"\1", ans, flags=re.I)  # "1 month" -> "month"
     # "Riverton, West Yorkshire" -> "Riverton". Keep dates, numbers, lists and "Washington, D.C.".
     head, sep, tail = ans.partition(", ")
     if sep and re.match(r"[A-Za-z]", tail) and "." not in tail and not re.search(r"\b(and|or)\b|&", ans):

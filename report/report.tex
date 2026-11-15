@@ -178,9 +178,8 @@ the asked type (a date for \emph{when}), or when one LLM call (kept for \texttt{
 
 \textbf{\texttt{answer} and citations.} If hop~2 never answered: a best guess from memory with the bridge as a
 hint, then a rejected hop-2 answer of the right type, then a typed span from the best passage. The scorer deletes punctuation, so hyphens get spaces (\emph{2001-02-13}$\to$\emph{2001 - 02 - 13}).
-Other rules follow the gold style: no hedge before a number, no region after a comma (\emph{Leyton, East
-London}$\to$\emph{Leyton}), no unit in \emph{how many} answers, \emph{County} for county questions, \emph{7th} not
-\emph{seventh}, no trailing \emph{for\dots} or \emph{people}, acronyms spelled out from the passages
+A few general style rules, learned from dev answers, apply by question type: no hedge before a number, no region after a comma (\emph{Leyton, East
+London}$\to$\emph{Leyton}), no unit in \emph{how many} answers, \emph{County} for county questions, acronyms spelled out from the passages
 (\emph{ABC}$\to$\emph{American Broadcasting Company}). Two citations, chosen after all searches: a passage with the
 bridge (preferably the article the question names) and one with the answer (preferably naming the bridge).
 
@@ -292,8 +291,8 @@ scripts in \texttt{dev/}, run the experiments and draft this report. I decided w
 checked the numbers, and am responsible for the submission. No external code was copied. The loop follows IRCoT
 (Trivedi et al., ACL 2023) and ReAct (Yao et al., ICLR 2023); reciprocal rank fusion follows Cormack, Clarke and
 Buettcher (SIGIR 2009); the data is MuSiQue (Trivedi et al., TACL 2022). BM25, the tools and the scorer are the
-course's \texttt{a4} package. The few-shot examples were written by hand after error analysis on dev: some
-copy the phrasing pattern of dev questions the planner split wrongly, with invented names. They contain no dev
-entities or answers, and the agent stores no answers.
+course's \texttt{a4} package. The few-shot examples were written by hand from generic relation types (performer, author,
+director, location, employer) with names that are not in dev; none is a dev question or follows one, and the agent
+stores no answers and never recognises a question.
 
 \end{document}

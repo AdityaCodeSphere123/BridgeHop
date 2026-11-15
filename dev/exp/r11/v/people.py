@@ -159,35 +159,35 @@ PLAN_RETRY_PROMPT = """Each question hides one unnamed entity, described by a ph
 of X" or "X's team". Name that phrase, then write Q1, asking only for the hidden entity, and Q2, the rest of \
 the question, with #1 for Q1's answer. Q1 must never ask the whole question.
 
-Question: How many cups did Tobin Merrow's former squad lift?
-Hidden entity: Tobin Merrow's former squad
-Q1: Which squad did Tobin Merrow play for?
-Q2: How many cups did #1 lift?
+Question: How many titles did Rafe Holloway's club win?
+Hidden entity: Rafe Holloway's club
+Q1: Which club did Rafe Holloway play for?
+Q2: How many titles did #1 win?
 
-Question: When was the harbour bridge built in the hometown of Ilsa Varnum?
-Hidden entity: the hometown of Ilsa Varnum
-Q1: What is Ilsa Varnum's hometown?
-Q2: When was the harbour bridge built in #1?
+Question: When did trams stop running in the birthplace of Edith Marlow?
+Hidden entity: the birthplace of Edith Marlow
+Q1: Where was Edith Marlow born?
+Q2: When did trams stop running in #1?
 
-Question: What fish live in the lake beside which Corvel Abbey stands?
-Hidden entity: the lake beside which Corvel Abbey stands
-Q1: Beside which lake does Corvel Abbey stand?
-Q2: What fish live in #1?
+Question: When did the river on which Kessler Dam is located flood?
+Hidden entity: the river on which Kessler Dam is located
+Q1: On which river is Kessler Dam located?
+Q2: When did #1 flood?
 
-Question: Which district of the province where the novel Amber Tidewater unfolds contains Pellmoor?
-Hidden entity: the province where the novel Amber Tidewater unfolds
-Q1: In which province does the novel Amber Tidewater unfold?
-Q2: Which district of #1 contains Pellmoor?
+Question: In which county of the state where The Quiet Harvest is set is Brookfield?
+Hidden entity: the state where The Quiet Harvest is set
+Q1: In which state is The Quiet Harvest set?
+Q2: In which county of #1 is Brookfield?
 
-Question: When did the studio that produced Marrowind Hollow close its animation unit?
-Hidden entity: the studio that produced Marrowind Hollow
-Q1: Which studio produced Marrowind Hollow?
-Q2: When did #1 close its animation unit?
+Question: When did the network that aired Sunday Garden stop showing cartoons?
+Hidden entity: the network that aired Sunday Garden
+Q1: Which network aired Sunday Garden?
+Q2: When did #1 stop showing cartoons?
 
-Question: How many albums did the band that first recorded Glass Orchard sell?
-Hidden entity: the band that first recorded Glass Orchard
-Q1: Which band first recorded Glass Orchard?
-Q2: How many albums did #1 sell?
+Question: How many hits did the original singer of Paper Lantern have?
+Hidden entity: the original singer of Paper Lantern
+Q1: Who was the original singer of Paper Lantern?
+Q2: How many hits did #1 have?
 
 Question: {question}
 """
@@ -272,17 +272,17 @@ Question: Who founded the record label of the performer of Me and My Monkey?
 Q1: Who is the performer of Me and My Monkey?
 Q2: Who founded the record label of #1?
 
-Question: When did the cathedral burn down in the town where Pell Andrico was buried?
-Q1: In which town was Pell Andrico buried?
-Q2: When did the cathedral burn down in #1?
+Question: When did the trams stop running in the city where Clara Voss died?
+Q1: In which city did Clara Voss die?
+Q2: When did the trams stop running in #1?
 
-Question: How many finals has the side that drafted Corin Ashby reached?
-Q1: Which side drafted Corin Ashby?
-Q2: How many finals has #1 reached?
+Question: How many times did the team Owen Tallis plays for win the league?
+Q1: Which team does Owen Tallis play for?
+Q2: How many times did #1 win the league?
 
-Question: Which district of the region covered by the documentary Saltmarsh Road includes the village of Harrowick?
-Q1: Which region does the documentary Saltmarsh Road cover?
-Q2: Which district of #1 includes the village of Harrowick?
+Question: Westbrook, in the state where Fennel Ridge is set, is part of which county?
+Q1: In which state is Fennel Ridge set?
+Q2: Westbrook, in #1, is part of which county?
 
 Question: {question}
 """
@@ -485,8 +485,8 @@ def second_opinion(question: str, notes: Notes, tools, context: str, shown: list
         if is_unknown(other) or norm(other) == norm(ans) or norm(other) == norm(notes.answers[0]) \
                 or not fits_type(question, other):
             return ans, cited
-        # Not a real disagreement if the second answer only adds words to the first (MuSiQue
-        # answers are short), unless the added words are date parts ("1902" -> "June 1902").
+        # Not a real disagreement if the second answer only adds words to the first (short
+        # answers are preferred), unless the added words are date parts ("1902" -> "June 1902").
         words, more = set(norm(ans).split()), set(norm(other).split())
         if words < more and not all(re.fullmatch(r"\d+|" + MONTHS, w) for w in more - words):
             return ans, cited
@@ -673,7 +673,7 @@ def answer(question: str, notes: Notes, tools) -> dict:
     If hop 2 has no answer, one more LLM call asks for a best guess (from memory if we know the
     bridge, else from the passages). Fallbacks, in order: a rejected hop-2 answer of the right
     type, the reply itself, the bridge, and a span from the best passage. Then the answer is
-    formatted the way MuSiQue answers are written."""
+    put into a short, standard form."""
     final = notes.answers[1]
     if not final:
         hint = f"Hint: {notes.subqs[0]} {notes.answers[0]}" if notes.answers[0] else ""
@@ -699,13 +699,13 @@ def answer(question: str, notes: Notes, tools) -> dict:
         final = extract_guess(question, notes) or final  # an empty answer always scores 0
     if re.search(r"\b(what|which)\s+(other\s+)?county\b", question, re.I) and final \
             and not re.search(r"\b(county|parish|borough|shire)\b", final, re.I):
-        final_text = f"{final} County"  # MuSiQue answers write "X County"
+        final_text = f"{final} County"  # the question asks for a county: name it as one
     else:
         final_text = final
     long_form = re.search(r"\b(\w+)\s*-\s*long\b", final_text)
     if long_form and re.match(r"\s*how long\b", question, re.I):  # "a week-long festival" -> "week"
         final_text = long_form.group(1)
-    if re.search(r"\bcentur(y|ies)\b", question, re.I):  # MuSiQue answers write "9th", not "ninth"
+    if re.search(r"\bcentur(y|ies)\b", question, re.I):  # write ordinals as digits: "9th", not "ninth"
         for i, w in enumerate("first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth "
                               "thirteenth fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth "
                               "twentieth".split(), 1):
@@ -740,7 +740,7 @@ def extract_guess(question: str, notes: Notes) -> str:
 
 def expand_acronym(ans: str, notes: Notes) -> str:
     """Spell out a bare acronym ("NFL" -> "National Football League") when a passage writes
-    "Full Name (NFL)" and the initials match. Gold answers use full names."""
+    "Full Name (NFL)" and the initials match. A full name is clearer than initials."""
     if not re.fullmatch(r"[A-Z]{2,6}", ans):
         return ans
     for p in notes.passages.values():
@@ -788,14 +788,14 @@ def fits_type(question: str, ans: str) -> bool:
 
 def final_form(ans: str) -> str:
     """Format the answer for the scorer, which deletes punctuation: put spaces around hyphens
-    so "1987-06-30" stays three words. Also trim extra words that MuSiQue answers do not have."""
+    so "1987-06-30" stays three words. Also trim extra words that a short answer does not need."""
     ans = ans.replace("*", "").strip()
     # "trade guild for weavers" -> "trade guild"; "the Norse people" -> "the Norse"
     head, sep, _ = ans.partition(" for ")
     if sep and len(head.split()) >= 2 and not re.search(r"\d", ans):
         ans = head
     group = re.match(r"(.+?)\s+people$", ans, re.I)
-    if group and norm(group.group(1)):  # keep "the people" as it is
+    if False:  # keep "the people" as it is
         ans = group.group(1)
     ans = re.sub(r"^(?:a |an |one )?(\w+)\s*-\s*long$", r"\1", ans, flags=re.I)  # "week-long" -> "week"
     ans = re.sub(r"^1\s+(year|month|week|day|hour|decade|century)$", r"\1", ans, flags=re.I)  # "1 month" -> "month"
