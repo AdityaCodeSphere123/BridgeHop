@@ -292,7 +292,8 @@ scripts in \texttt{dev/}, run the experiments and draft this report. I decided w
 checked the numbers, and am responsible for the submission. No external code was copied. The loop follows IRCoT
 (Trivedi et al., ACL 2023) and ReAct (Yao et al., ICLR 2023); reciprocal rank fusion follows Cormack, Clarke and
 Buettcher (SIGIR 2009); the data is MuSiQue (Trivedi et al., TACL 2022). BM25, the tools and the scorer are the
-course's \texttt{a4} package. The few-shot examples in the prompts were written by hand; they contain no
-answers and none of them is a dev question.
+course's \texttt{a4} package. The few-shot examples were written by hand after error analysis on dev: some
+copy the phrasing pattern of dev questions the planner split wrongly, with invented names. They contain no dev
+entities or answers, and the agent stores no answers.
 
 \end{document}
