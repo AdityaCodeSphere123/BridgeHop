@@ -93,10 +93,9 @@
 \newpage
 
 \section*{Overview}
-My agent is a \textbf{decompose-then-chain} loop (IRCoT/ReAct style) sized for the budget of 5 searches and
-6 LLM calls. One LLM call splits the question into Q1 and Q2, where Q2 refers to Q1's answer (the
-\emph{bridge}) as \#1. Each hop runs two complementary BM25 searches, fuses them, and asks the LLM to name
-the passage and the short answer. The bridge fills \#1, so every hop-2 query depends on hop~1.
+One-shot retrieval fails on two-hop questions because the second paragraph is about an entity the question
+never names. My agent first finds that entity (the \emph{bridge}): one call splits the question into Q1 and Q2
+(\#1 = Q1's answer), hop~1 answers Q1, and hop~2 searches with the bridge. Spare budget goes into checking the answer.
 
 \begin{center}
 \begin{tikzpicture}[font=\scriptsize, node distance=0.22cm,
@@ -128,7 +127,7 @@ B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.
 \textbf{My agent (final, leaderboard)} & \textbf{0.5567} & \textbf{0.6352} & \textbf{0.6633} & \textbf{0.6408} & 4.40 & 5.23\\
 \bottomrule
 \end{tabular}
-\captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search/LLM = mean calls per question.}
+\captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search/LLM = mean calls per question. All 300 ran \texttt{ok}; slowest 6.4\,s.}
 \label{tab:main}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.395\textwidth}
@@ -147,79 +146,80 @@ gold paragraphs cited (of 2) & 0.74 & 1.33\\
 \captionof{table}{Why iterating helps (\texttt{dev/analyze.py}).}
 \end{minipage}
 
-\vspace{2pt}
-Single-shot retrieval finds the hop-2 paragraph for only 23\% of questions, as the question never names
-the bridge; once it is searched for, this rises to 72\%. A fresh run (13 Nov) reproduces my row exactly: 300 \texttt{ok}, slowest 6.4\,s.
 
 % =====================================================================
 \section{Design}
-\textbf{\texttt{next\_query}.} Hop~1 searches Q1 and the original question ($k{=}10$ each). Hop~2 searches Q2 with the bridge filled in and the bridge
-followed by the question, both without question words (\emph{what, when, did}\dots). The lists of a hop are fused by reciprocal rank ($\sum 1/(3+\mathrm{rank})$), which lifts passages
-that both queries rank highly. A failed hop-2 read searches the bridge alone (its own article), or for a \emph{when} question the bridge plus
-the first sentence of an LLM-written answer passage (Query2doc); a failed hop-1 read searches Q1 plus the first sentence of such a passage written for Q1. \textbf{The plan} is re-asked when Q2 lacks \#1, Q1 restates $\ge$90\% of
-the question's content words, Q1 adds a kind of place (\emph{birthplace of X}$\to$\emph{which country}), asks \emph{when}/\emph{how many} (no bridge is a date), or copies a prompt example; the retry prompt makes the model first name the hidden entity (\emph{``the
-birthplace of X''}) with six invented examples. \textbf{Reading} shows 10/12 whole passages; at hop~1 the article
-whose title is named in the question goes first. A bridge read from a passage that is neither first nor that
-article (38\% right) is read once more after a Query2doc search for Q1. After two failed hop-1 reads the bridge is taken from memory.
+\textbf{The plan.} A bad split hurts most: answer F1 was 0.23 when Q1 restated the question and 0.35 with no
+plan, vs.\ 0.53. The plan is re-asked when Q2 lacks \#1, Q1 repeats $\ge$90\% of the question's content words, adds
+a kind of place (\emph{birthplace of X}$\to$\emph{which country}), asks \emph{when}/\emph{how many} (no bridge is a
+date), or copies a prompt example. The retry prompt has the model name the hidden entity first, with six invented examples.
 
-\textbf{Second read, judge, memory.} A hop-2 answer is checked by reading the same passages in reverse order
-with the original question instead of Q2, which the plan sometimes words badly. If the answers really differ, one
-call shows both with their passages and asks \emph{``A or B?''}; the first answer is A and wins on doubt. If the answer is in another passage than the one cited, a
-second opinion that only confirms it sends hop~2 back to search (if calls remain for that opinion). With calls
-to spare, the model also answers Q2 from memory; if a passage (retrieved, or from a spare search) holds it, the judge decides again.
+\textbf{\texttt{next\_query}.} Each hop sends two $k{=}10$ queries: Q1 and the question at hop~1; Q2 with the
+bridge filled in, and bridge + question, at hop~2, without question words (noise for BM25). Reciprocal rank
+fusion, $\sum 1/(3+\mathrm{rank})$, puts passages both queries like first. Retries depend on what failed: after a
+failed hop-2 read, the bridge alone (its own article), or for \emph{when} questions, whose dates that article
+rarely holds, the bridge plus the first sentence of an LLM-written guess passage (Query2doc); after a failed hop-1
+read, Q1 plus such a sentence; else the best unsearched passage title plus keywords.
 
-\textbf{\texttt{should\_stop}.} Stop once hop~2 has an answer that is not \emph{unknown}, is not the bridge and
-has the asked type (e.g.\ a date for \emph{when}), or when one LLM call is left (kept for \texttt{answer}) or under 15\,s remain.
+\textbf{Reading.} The LLM sees 10 passages at hop~1 and 12 at hop~2, whole: cutting at 1,200 characters hid 5
+gold answers, and full passages (none exceeds 2,000) fixed 8 (+0.016). A prompt rejected as too long is retried shorter. Order matters to a 4B model (bridge right 67\% with the gold passage first, 30\%
+second), so at hop~1 the article named in the question goes first. Only the last read must guess. A bridge read from a passage that is neither first nor that article (38\% right) is re-read after a
+Query2doc search. If hop~1 keeps failing, the bridge comes from memory and hop~2 still searches and reads.
 
-\textbf{\texttt{answer}.} Hop~2's answer; else one forced best-guess call (from memory, with the bridge as hint), then fallbacks. Hyphens are spaced (\emph{2001-02-13}$\to$\emph{2001 - 02 - 13}), as
-the scorer deletes punctuation, and a hedge before a number is dropped. \textbf{Citations} are chosen after all searches: the passage that mentions the bridge (preferring
-the topic entity's article) and the one that mentions the answer (preferring one that also names the bridge),
-exactly two (the gold evidence is two paragraphs); each sub-question word a passage shares adds weight. A region after a comma is cut (\emph{Leyton, East
-London}$\to$\emph{Leyton}) and \emph{how many X} answers drop the unit (\emph{one season}$\to$\emph{one}); county answers end in
-\emph{County} and centuries use numerals (\emph{seventh}$\to$\emph{7th}), as in the gold data; a trailing \emph{for\dots} clause or \emph{people} is dropped.
-Acronyms are spelled out from the passages (\emph{ABC}$\to$\emph{American Broadcasting Company}); an empty answer becomes a typed span of the best passage.
+\textbf{Checking the hop-2 answer.} A second read uses the same passages reversed and the original question
+instead of Q2, which the plan sometimes words badly. If the answers disagree, one call shows both with their passages and asks \emph{``A or B?''}; A, the first, wins any doubt. If the cited
+passage lacks the answer but another has it, the evidence is likely mixed up: a second opinion that only repeats
+it sends hop~2 back to search. With calls to spare the model also answers Q2 from memory, and the judge decides
+again if a passage (retrieved or from a spare search) holds that answer; skipped for \emph{last/current/recent}
+questions, since the model knows newer facts than the dataset.
+
+\textbf{\texttt{should\_stop}.} Stop once hop~2 has an answer that is not \emph{unknown}, not the bridge and of
+the asked type (a date for \emph{when}), or when one LLM call (kept for \texttt{answer}) or under 15\,s is left.
+
+\textbf{\texttt{answer} and citations.} If hop~2 never answered: a best guess from memory with the bridge as a
+hint, then a rejected hop-2 answer of the right type, then a typed span from the best passage. The scorer deletes punctuation, so hyphens get spaces (\emph{2001-02-13}$\to$\emph{2001 - 02 - 13}).
+Other rules follow the gold style: no hedge before a number, no region after a comma (\emph{Leyton, East
+London}$\to$\emph{Leyton}), no unit in \emph{how many} answers, \emph{County} for county questions, \emph{7th} not
+\emph{seventh}, no trailing \emph{for\dots} or \emph{people}, acronyms spelled out from the passages
+(\emph{ABC}$\to$\emph{American Broadcasting Company}). Two citations, chosen after all searches: a passage with the
+bridge (preferably the article the question names) and one with the answer (preferably naming the bridge).
 
 \begin{minipage}[t]{0.50\textwidth}
 \vspace{0pt}
 \centering
 \begin{tikzpicture}
-\begin{axis}[xbar, bar shift=0pt, width=4.2cm, height=4.1cm, scale only axis, bar width=2.8pt,
-  xmin=0.49, xmax=0.648, xtick={0.50,0.52,0.54,0.56,0.58,0.60,0.62},
+\begin{axis}[xbar, bar shift=0pt, width=4.0cm, height=4.0cm, scale only axis, bar width=5pt,
+  xmin=0.49, xmax=0.685, xtick={0.50,0.54,0.58,0.62,0.66},
   xticklabel style={font=\scriptsize,/pgf/number format/fixed,/pgf/number format/precision=2},
   yticklabel style={font=\scriptsize}, xlabel={dev $S$}, xlabel style={font=\scriptsize},
-  symbolic y coords={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v}, ytick={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v}, y dir=reverse,
-  yticklabels={first iterative agent, +answer fallbacks\,\&\,citations, +$k{=}10$\,/\,RRF\,/\,retries,
-    +plan check \& retry prompt, +topic article first, +output formatting, +clean-up \& citation words, +second read \& judge, +original question in judge, +memory\,/\,plan\,/\,format fixes, +Query2doc retry (\emph{when}), +Query2doc retry (hop~1), +weak-bridge recheck, +whole passages, +\emph{for}/\emph{people} rules, +mixed-up evidence check, +acronyms \& empty-answer guess, +no date/number Q1, +memory fallbacks, +grounded memory \& title match, +copied-example check, +evidence-check fixes},
-  enlarge y limits=0.1, xmajorgrids=true, major grid style={gray!22}, axis line style={gray!70},
+  symbolic y coords={a,b,c,d,e,f,g,h,i,j,k,l}, ytick={a,b,c,d,e,f,g,h,i,j,k,l}, y dir=reverse,
+  yticklabels={first iterative agent, +fallbacks\,/\,citations\,/\,RRF, +plan check \& retry prompt,
+    +topic article first\,/\,formatting, +second read \& judge, +original question in judge,
+    +memory check\,/\,plan\,/\,format fixes, +Query2doc retries, +weak-bridge recheck\,/\,whole passages,
+    +evidence check\,/\,acronyms, +memory fallbacks\,/\,entity plan, +grounding\,/\,plan\,/\,evidence fixes},
+  enlarge y limits=0.07, xmajorgrids=true, major grid style={gray!22}, axis line style={gray!70},
   nodes near coords, nodes near coords style={font=\scriptsize,/pgf/number format/fixed,
     /pgf/number format/fixed zerofill,/pgf/number format/precision=4}]
-\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,c) (0.5402,d) (0.5441,e) (0.5576,g) (0.5667,h) (0.5757,i) (0.5896,j) (0.5959,k) (0.5992,l) (0.6182,n) (0.6207,o) (0.6234,p) (0.6277,q) (0.6304,r) (0.6362,s) (0.6382,t) (0.6386,u) (0.6408,v)};
-\addplot[fill=cC!45, draw=cC, line width=0.4pt] coordinates {(0.5165,b) (0.5521,f) (0.6021,m)};
+\addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,b) (0.5402,c) (0.5521,d) (0.5667,e) (0.5757,f) (0.5896,g) (0.5992,h) (0.6182,i) (0.6277,j) (0.6362,k) (0.6408,l)};
 \end{axis}
 \end{tikzpicture}
-\captionof{figure}{Each change, cumulative. Blue: leaderboard. Green: dev score on the staff server (exact replay or full run), not uploaded.}
+\captionof{figure}{Dev $S$ after each group of changes (cumulative).}
 \label{fig:steps}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.47\textwidth}
 \vspace{0pt}
-\textbf{What the gains came from.}
-\begin{itemize}
-\item \textbf{Bad plans.} Answer F1 was 0.23 when Q1 restated the question and 0.35 with no plan, vs.\ 0.53.
-\item \textbf{Position.} With the gold passage first the bridge was right 67\% of the time, second 30\%.
-\item \textbf{Cut passages.} Passages were cut at 1,200 characters, which hid the answer of 5 gold
-passages; showing them whole (none exceeds 2,000) fixed 8 answers (+0.016).
-\end{itemize}
-\textbf{Tried, did not help.} Quoting the evidence first ($S$ 0.5441$\to$0.5337), a third citation and
-about 30 more variants (reasoning first, judging the bridge, backtracking, 14 passages at hop~2, Query2doc for
-every question: recall 79$\to$88\% but it took the judge's budget) lost or tied.
+\textbf{What did not help.} About 30 variants lost or tied: quoting the evidence before answering ($S$
+0.5441$\to$0.5337); a reasoning line; judging the bridge too; backtracking to a new bridge (the model repeats the
+rejected one); 14 passages at hop~2; a third citation; Query2doc for every question (hop-2 recall 79$\to$88\%, but
+it used the calls the judge needed). With six calls, checking an answer paid off more than finding more passages.
 \end{minipage}
 
 % =====================================================================
 \section{Error analysis}
-In the fresh run of the final agent, 133 of the 300 dev questions have EM $=0$. \texttt{dev/analyze.py} labels them automatically:
-(i)~32, (ii)~11, (iii)~39, (iv)~42, (v)~9. Many (iv) cases already get partial credit, e.g.\ \emph{August 5,
-1940} vs.\ \emph{5 August 1940} has F1 1.0 but EM 0. I checked the traces of 10 wrong questions by hand
-(Table~\ref{tab:err}); they match the automatic labels except Berthelot, labelled (iii) because both gold paragraphs were retrieved, although the bridge was wrong.
+The final agent gets EM $=0$ on 133 of the 300 dev questions. \texttt{dev/analyze.py} labels them automatically:
+(i)~32, (ii)~11, (iii)~39, (iv)~42, (v)~9. Many (iv) cases still earn partial credit (\emph{August 5, 1940} vs.\
+\emph{5 August 1940} has F1 1.0, EM 0). I labelled 10 of them by hand from their traces (Table~\ref{tab:err}); only
+Berthelot disagrees with the automatic label, which says (iii) because both gold paragraphs were retrieved.
 
 \begin{minipage}[t]{0.47\textwidth}
 \vspace{0pt}
@@ -242,12 +242,11 @@ total & 258 & 178 & 163 & 133\\
 \end{minipage}\hfill
 \begin{minipage}[t]{0.505\textwidth}
 \vspace{0pt}
-\textbf{The bottleneck moved from retrieval to reading.} Iterating cut bridge failures (i) from 191 to 32,
-because the bridge is now searched for. Category (iii) grew from 15 to 39 for the same reason: far more
-questions now reach the final read with both gold paragraphs retrieved (46 for B1, 206 now), and there
-the 4B reader reaches an answer F1 of only 0.77 (B1: 0.54). The plan fix and the passage ordering
-attacked (i); the judge and memory steps attack (iii), which fell from 50 to 39 (total 163$\to$133).
-Reading errors remain the largest class.
+\textbf{The bottleneck moved from retrieval to reading.} Iterating cut bridge failures (i) from 191 to 32.
+Category (iii) grew from 15 to 39 for the same reason: 206 questions now reach the final read with both gold
+paragraphs retrieved (46 for B1), and on those the 4B reader scores answer F1 0.77 (B1: 0.54). The plan checks
+and passage ordering target (i); the judge and memory steps target (iii), which fell from 50 to 39. Reading
+errors are still the largest class.
 \end{minipage}
 
 \begin{center}
@@ -257,15 +256,15 @@ Reading errors remain the largest class.
 & Question (shortened) & Gold & Mine & What went wrong\\
 \midrule
 (i) & Last time Auburn won in the work location of Johnny Berthelot? & 1999 & 1994 & bridge \emph{Gonzales} (hometown), not \emph{Baton Rouge}\\
-(i) & Sibling of the composer of \emph{Downtown}? & Astrid Young & Michael Gore & bridge \emph{Luke Laird} (another \emph{Downtown}), not Neil Young\\
+(i) & Sibling of the composer of \emph{Downtown}? & Astrid Young & Michael Gore & bridge \emph{Luke Laird}, writer of Lady Antebellum's \emph{Downtown}, not Neil Young\\
 (i) & When did the civil war start in the country Ita Ford is from? & October 15, 1979 & April 1861 & bridge \emph{United States} (her nationality), not El Salvador\\
 (ii) & Manager when Tommy Logan's team won the Champions League? & Roberto Di Matteo & Jos\'e Mourinho & bridge Chelsea right; stopped with a search left, hop-2 paragraph never retrieved\\
 (ii) & When did Harrysong's country become a member of OPEC? & 1971 & the 1970s & bridge Nigeria right; vague answer accepted, OPEC table never retrieved\\
 (iii) & Where did the 2007 World Series winner get Brandon Phillips from? & Los Angeles Angels & Cleveland Indians & both gold paragraphs retrieved, wrong team read\\
-(iii) & Average household size in the city served by WAJM? & 2.46 & 2.50 & second read found 2.46; the judge kept 2.50 (2000 census)\\
-(iv) & Country of Saldus Municipality joined the Soviet Union when? & 5 August 1940 & August 5, 1940 & same date, other order (F1 1.0, EM 0)\\
-(iv) & Forest by the southern border of Jerzy Passendorfer's death city? & Kabaty & Kabaty Forest & correct, extra word (F1 0.67)\\
-(v) & Who was targeted for defrauding the electoral process, in Hotel Courtland's state? & a whole sentence & John Kerry & gold answer is a sentence; question ill-posed\\
+(iii) & Average household size in the city served by WAJM? & 2.46 & 2.50 & second read found 2.46; the judge kept 2.50\\
+(iv) & When did the country of Saldus Municipality join the Soviet Union? & 5 August 1940 & August 5, 1940 & same date, other order (F1 1.0, EM 0)\\
+(iv) & Forest by the southern border of Jerzy Passendorfer's death city? & Kabaty & Kabaty Forest & correct despite a wrong bridge (\emph{Skolim\'ow}); extra word (F1 0.67)\\
+(v) & Who was targeted for defrauding the electoral process, in Hotel Courtland's state? & a whole sentence & John Kerry & gold answer is a sentence; hop-2 paragraph never retrieved\\
 \bottomrule
 \end{tabularx}
 \captionof{table}{Ten hand-labelled errors of the final agent: (i) bridge not found 3, (ii) stopped too early 2, (iii) evidence
@@ -278,19 +277,19 @@ he is \emph{a member of the Louisiana House of Representatives \dots\ based in h
 returns the explicit city; the intended bridge, Baton Rouge (the seat of the legislature), is only implied. Hop~2
 asks about Auburn's wins \emph{at Gonzales}: the first read says \emph{unknown}, and the best-guess read takes
 \emph{1994} from the gold Auburn--LSU table, which was retrieved, but 1994 is a win \emph{at Auburn, AL}; the last
-win at Baton Rouge is 1999. Errors start at the bridge: with a wrong bridge and no hop-2 paragraph my answer F1 is
+win at Baton Rouge is 1999. One wrong word at hop~1 decides the question: with a wrong bridge and no hop-2 paragraph answer F1 is
 0.15 ($n{=}39$), against 0.79 ($n{=}189$) with the right bridge and the paragraph found.
 
 \textbf{Example 2 (iii), WAJM.} Bridge (\emph{Atlantic City}) and both gold paragraphs are found. Two
 near-identical, undated census paragraphs of that article give 2.50 and 2.46 (gold). The first read answers 2.50,
-the second read (reversed passages, original question) 2.46, and the judge keeps A (2.50): it keeps the first
-answer on any doubt, so between two equally plausible passages the higher-ranked one wins.
+the second read (reversed passages, original question) 2.46, and the judge keeps A (2.50). Because A wins any
+doubt, the higher-ranked of two equally plausible passages wins; no passage says which census is meant.
 
 % =====================================================================
 \section{AI-use disclosure and code provenance}
 I used Claude Code (Anthropic, Claude Opus 5.5) to read the starter code, write the agent and the analysis
-scripts in \texttt{dev/}, run the experiments and draft this report. I chose what to try and what to keep and
-I checked the numbers; I am responsible for the submission. No external code was copied. The loop follows IRCoT
+scripts in \texttt{dev/}, run the experiments and draft this report. I decided what to try and what to keep,
+checked the numbers, and am responsible for the submission. No external code was copied. The loop follows IRCoT
 (Trivedi et al., ACL 2023) and ReAct (Yao et al., ICLR 2023); reciprocal rank fusion follows Cormack, Clarke and
 Buettcher (SIGIR 2009); the data is MuSiQue (Trivedi et al., TACL 2022). BM25, the tools and the scorer are the
 course's \texttt{a4} package. The few-shot examples in the prompts were written by hand; they contain no
