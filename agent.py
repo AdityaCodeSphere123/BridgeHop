@@ -233,7 +233,7 @@ def plan(question: str, notes: Notes, tools) -> None:
             prompts[1] = PLAN_ENTITY_PROMPT
             continue
         parsed = parse_plan(out, question)
-        if parsed and not wrong_place_type(question, parsed[0]):
+        if parsed and not wrong_place_type(question, parsed[0]) and not loses_entity(question, parsed[0]):
             notes.subqs = list(parsed)
             return
         first = first or parsed
@@ -293,6 +293,21 @@ def wrong_place_type(question: str, q1: str) -> bool:
     target = re.match(r"\s*(?:in\s+)?(?:what|which)\s+(?:other\s+)?(\w+)", question, re.I)
     return bool(in_q1 - in_q) or bool(target and target.group(1).lower() in in_q1 and
                                       len(re.findall(PLACE_TYPES, question, re.I)) == 1)
+
+
+def named_words(text: str) -> set[str]:
+    """Lower-cased capitalised words after the first word ("Tim Breaux's" -> tim, breaux)."""
+    words = re.findall(r"[^\W\d_][\w.&-]*", text.split(" ", 1)[1] if " " in text else "")
+    return {re.sub(r"'s$", "", w).lower() for w in words if w[:1].isupper() and len(w) > 2}
+
+
+def loses_entity(question: str, q1: str) -> bool:
+    """True if Q1 names none of the entities the question names (it lost the starting point of the
+    chain), or Q1 only asks who someone is ("Who is Lou Yun?"), which gives a description, not an entity."""
+    named = named_words(question.replace("'s", " "))
+    q1_words = set(re.findall(r"[\w.&-]+", q1.replace("'s", " ").lower()))
+    bare = re.fullmatch(r"\s*(?:[Ww]ho|[Ww]hat) (?:is|was|are|were) ((?:[A-Z][\w.'-]*\s*)+)\?\s*", q1)
+    return bool(named and not named & q1_words) or bool(bare)
 
 
 # Read: the LLM answers the current hop from the passages

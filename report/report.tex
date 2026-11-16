@@ -124,7 +124,7 @@ Dev set, 300 questions & EM & Ans.\ F1 & Ev.\ F1 & $S$ & Search & LLM\\
 \midrule
 B1 single-shot (starter) & 0.1400 & 0.2110 & 0.3717 & 0.2431 & 1.00 & 1.00\\
 B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.03\\
-\textbf{My agent (final)} & \textbf{0.4933} & \textbf{0.5905} & \textbf{0.6600} & \textbf{0.6044} & 4.36 & 5.26\\
+\textbf{My agent (final)} & \textbf{0.4933} & \textbf{0.5927} & \textbf{0.6633} & \textbf{0.6069} & 4.36 & 5.26\\
 \bottomrule
 \end{tabular}
 \captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search/LLM = mean calls per question. All 300 ran \texttt{ok}, each far below the 60\,s limit.}
@@ -139,8 +139,8 @@ Diagnostic & B1 & Mine\\
 \midrule
 both gold paragraphs retrieved & 15.3\% & 69.3\%\\
 hop-2 paragraph retrieved & 23.3\% & 72.3\%\\
-bridge (hop-1 answer) correct & -- & 75.3\%\\
-gold paragraphs cited (of 2) & 0.74 & 1.32\\
+bridge (hop-1 answer) correct & -- & 75.7\%\\
+gold paragraphs cited (of 2) & 0.74 & 1.33\\
 \bottomrule
 \end{tabular}
 \captionof{table}{Why iterating helps (\texttt{dev/analyze.py}).}
@@ -152,7 +152,8 @@ gold paragraphs cited (of 2) & 0.74 & 1.32\\
 \textbf{The plan.} A bad split hurts most: answer F1 was 0.23 when Q1 restated the question and 0.35 with no
 plan, vs.\ 0.53. The plan is re-asked when Q2 lacks \#1, Q1 repeats $\ge$90\% of the question's content words, adds
 a kind of place (\emph{birthplace of X}$\to$\emph{which country}), asks \emph{when}/\emph{how many} (a bridge is an
-entity, not a date), or copies a prompt example. The retry prompt has the model name the hidden entity first, with five invented examples.
+entity, not a date), drops every name the question gives or only asks \emph{who is X}, or copies a prompt example.
+The retry prompt has the model name the hidden entity first, with five invented examples.
 
 \textbf{\texttt{next\_query}.} Each hop sends two $k{=}10$ queries: Q1 and the question at hop~1; Q2 with the
 bridge filled in, and bridge + question, at hop~2, without question words (noise for BM25). Reciprocal rank
@@ -188,20 +189,21 @@ bridge (preferably the article the question names) and one with the answer (pref
   xmin=0.49, xmax=0.685, xtick={0.50,0.54,0.58,0.62,0.66},
   xticklabel style={font=\scriptsize,/pgf/number format/fixed,/pgf/number format/precision=2},
   yticklabel style={font=\scriptsize}, xlabel={dev $S$}, xlabel style={font=\scriptsize},
-  symbolic y coords={a,b,c,d,e,f,g,h,i,j,k,l,m,n}, ytick={a,b,c,d,e,f,g,h,i,j,k,l,m,n}, y dir=reverse,
+  symbolic y coords={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o}, ytick={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o}, y dir=reverse,
   yticklabels={first iterative agent, +fallbacks\,/\,citations\,/\,RRF, +plan check \& retry prompt,
     +topic article first\,/\,formatting, +second read \& judge, +original question in judge,
     +memory check\,/\,plan\,/\,format fixes, +Query2doc retries, +weak-bridge recheck\,/\,whole passages,
     +evidence check\,/\,acronyms, +memory fallbacks\,/\,entity plan, +grounding\,/\,plan\,/\,evidence fixes,
-    $-$dev-shaped examples \& rules, $-$all dev answer-style rules},
+    $-$dev-shaped examples \& rules, $-$all dev answer-style rules, +named-entity plan check},
   enlarge y limits=0.07, xmajorgrids=true, major grid style={gray!22}, axis line style={gray!70},
   nodes near coords, nodes near coords style={font=\scriptsize,/pgf/number format/fixed,
     /pgf/number format/fixed zerofill,/pgf/number format/precision=4}]
 \addplot[fill=cA!45, draw=cA, line width=0.4pt] coordinates {(0.5086,a) (0.5213,b) (0.5402,c) (0.5521,d) (0.5667,e) (0.5757,f) (0.5896,g) (0.5992,h) (0.6182,i) (0.6277,j) (0.6362,k) (0.6408,l)};
 \addplot[fill=cB!45, draw=cB, line width=0.4pt] coordinates {(0.6217,m) (0.6044,n)};
+\addplot[fill=cC!45, draw=cC, line width=0.4pt] coordinates {(0.6069,o)};
 \end{axis}
 \end{tikzpicture}
-\captionof{figure}{Dev $S$ after each group of changes (cumulative). Orange: removing everything learned from dev answers (final agent).}
+\captionof{figure}{Dev $S$ after each group of changes (cumulative). Orange: removing everything learned from dev answers. Last bar: the final agent.}
 \label{fig:steps}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.47\textwidth}
@@ -215,7 +217,7 @@ it used the calls the judge needed). With six calls, checking an answer paid off
 % =====================================================================
 \section{Error analysis}
 The final agent gets EM $=0$ on 152 of the 300 dev questions. \texttt{dev/analyze.py} labels them automatically:
-(i)~37, (ii)~15, (iii)~43, (iv)~49, (v)~8. Many (iv) cases still earn partial credit (\emph{August 5, 1940} vs.\
+(i)~37, (ii)~15, (iii)~42, (iv)~50, (v)~8. Many (iv) cases still earn partial credit (\emph{August 5, 1940} vs.\
 \emph{5 August 1940} has F1 1.0, EM 0). I labelled 10 of them by hand from their traces (Table~\ref{tab:err}); only
 Berthelot disagrees with the automatic label, which says (iii) because both gold paragraphs were retrieved.
 
@@ -228,8 +230,8 @@ Errors (EM $=0$), auto labels & B1 & first & no judge & final\\
 \midrule
 (i) bridge entity not found & 191 & 61 & 43 & 37\\
 (ii) stopped too early & 0 & 20 & 16 & 15\\
-(iii) evidence retrieved, wrong answer & 15 & 36 & 50 & 43\\
-(iv) correct but marked wrong & 52 & 45 & 41 & 49\\
+(iii) evidence retrieved, wrong answer & 15 & 36 & 50 & 42\\
+(iv) correct but marked wrong & 52 & 45 & 41 & 50\\
 (v) other & 0 & 16 & 13 & 8\\
 \midrule
 total & 258 & 178 & 163 & 152\\
@@ -241,9 +243,9 @@ total & 258 & 178 & 163 & 152\\
 \begin{minipage}[t]{0.505\textwidth}
 \vspace{0pt}
 \textbf{The bottleneck moved from retrieval to reading.} Iterating cut bridge failures (i) from 191 to 37.
-Category (iii) grew from 15 to 43 for the same reason: 208 questions now reach the final read with both gold
+Category (iii) grew from 15 to 42 for the same reason: 208 questions now reach the final read with both gold
 paragraphs retrieved (46 for B1), and on those the 4B reader scores answer F1 0.74 (B1: 0.54). The plan checks
-and passage ordering target (i); the judge and memory steps target (iii), which fell from 50 to 43. Reading
+and passage ordering target (i); the judge and memory steps target (iii), which fell from 50 to 42. Reading
 errors are still the largest class.
 \end{minipage}
 
@@ -276,7 +278,7 @@ returns the explicit city; the intended bridge, Baton Rouge (the seat of the leg
 asks about Auburn's wins \emph{at Gonzales}: the first read says \emph{unknown}, and the best-guess read takes
 \emph{1994} from the gold Auburn--LSU table, which was retrieved, but 1994 is a win \emph{at Auburn, AL}; the last
 win at Baton Rouge is 1999. One wrong word at hop~1 decides the question: with a wrong bridge and no hop-2 paragraph answer F1 is
-0.16 ($n{=}43$), against 0.76 ($n{=}186$) with the right bridge and the paragraph found.
+0.16 ($n{=}43$), against 0.76 ($n{=}187$) with the right bridge and the paragraph found.
 
 \textbf{Example 2 (iii), WAJM.} Bridge (\emph{Atlantic City}) and both gold paragraphs are found. Two
 near-identical, undated census paragraphs of that article give 2.50 and 2.46 (gold). The first read answers 2.50,
