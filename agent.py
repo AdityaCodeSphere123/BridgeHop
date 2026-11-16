@@ -316,14 +316,14 @@ def wrong_place_type(question: str, q1: str) -> bool:
 
 
 def named_words(text: str) -> set[str]:
-    """Lower-cased capitalised words after the first word ("Tim Breaux's" -> tim, breaux)."""
+    """Lower-cased capitalised words after the first word ("Ada Morrow's" -> ada, morrow)."""
     words = re.findall(r"[^\W\d_][\w.&-]*", text.split(" ", 1)[1] if " " in text else "")
     return {re.sub(r"'s$", "", w).lower() for w in words if w[:1].isupper() and len(w) > 2}
 
 
 def loses_entity(question: str, q1: str) -> bool:
     """True if Q1 names none of the entities the question names (it lost the starting point of the
-    chain), or Q1 only asks who someone is ("Who is Lou Yun?"), which gives a description, not an entity."""
+    chain), or Q1 only asks who someone is ("Who is Ada Morrow?"), which gives a description, not an entity."""
     named = named_words(question.replace("'s", " "))
     q1_words = set(re.findall(r"[\w.&-]+", q1.replace("'s", " ").lower()))
     bare = re.fullmatch(r"\s*(?:[Ww]ho|[Ww]hat) (?:is|was|are|were) ((?:[A-Z][\w.'-]*\s*)+)\?\s*", q1)
