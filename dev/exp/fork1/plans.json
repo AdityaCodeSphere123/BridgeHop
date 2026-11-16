@@ -1,0 +1,2402 @@
+[
+{
+"id": "2hop__665488_58935",
+"q": "When is the last time auburn won in the work location of Johnny Berthelot?",
+"q1": "What is the work location of Johnny Berthelot?",
+"q2": "When was the last time Auburn won at #1?",
+"gb": "Baton Rouge",
+"f1": 0.0
+},
+{
+"id": "2hop__144509_8773",
+"q": "What is the hockey club at the birthplace of Howard Wood called?",
+"q1": "Where was Howard Wood born?",
+"q2": "What is the hockey club at #1 called?",
+"gb": "Southampton",
+"f1": 1.0
+},
+{
+"id": "2hop__128939_185321",
+"q": "Which region is the city served by CIWW located?",
+"q1": "Which city is served by CIWW?",
+"q2": "Which region is #1 located in?",
+"gb": "Ottawa",
+"f1": 0.0
+},
+{
+"id": "2hop__377887_83687",
+"q": "What is the population of Arlene B. Arcillas's birthplace in California?",
+"q1": "Where was Arlene B. Arcillas born?",
+"q2": "What is the population of #1 in California?",
+"gb": "Santa Rosa",
+"f1": 0.0
+},
+{
+"id": "2hop__63539_53850",
+"q": "What is the current strength of the group that elects the speaker of Lok Sabha?",
+"q1": "What is the name of the group that elects the speaker of Lok Sabha?",
+"q2": "What is the current strength of #1?",
+"gb": "the Lok Sabha",
+"f1": 1.0
+},
+{
+"id": "2hop__48498_89314",
+"q": "Where did the team that won the MLB World Series in 2007 get Brandon Phillips from?",
+"q1": "Which team won the MLB World Series in 2007?",
+"q2": "Where did #1 get Brandon Phillips from?",
+"gb": "the Red Sox",
+"f1": 0.0
+},
+{
+"id": "2hop__358811_55584",
+"q": "Who is the parliament speaker in the country using Suaman Constituency?",
+"q1": "Which country uses Suaman Constituency?",
+"q2": "Who is the parliament speaker in #1?",
+"gb": "Ghana",
+"f1": 1.0
+},
+{
+"id": "2hop__480829_72962",
+"q": "How many times did Dale Jasper's team win premier league?",
+"q1": "How many times did Dale Jasper's team win premier league?",
+"q2": "How many times did Dale Jasper's team win premier league?",
+"gb": "Chelsea",
+"f1": 0.0
+},
+{
+"id": "2hop__192206_46042",
+"q": "Where is the rainforest in the country where An\u00edbal Acevedo Vil\u00e1 has citizenship located?",
+"q1": "In which country does An\u00edbal Acevedo Vil\u00e1 have citizenship?",
+"q2": "Where is the rainforest located in #1?",
+"gb": "Puerto Rico",
+"f1": 0.0
+},
+{
+"id": "2hop__136970_677577",
+"q": "Dean, in the country where Trailer Park Boys takes place, shares a border with what county?",
+"q1": "In which country does Trailer Park Boys take place?",
+"q2": "Which county does Dean share a border with in #1?",
+"gb": "Nova Scotia",
+"f1": 0.5
+},
+{
+"id": "2hop__778998_369731",
+"q": "What musical ensemble released a live album recorded at the broadcasting studios of the network that distributed Vision On?",
+"q1": "Which musical ensemble released a live album?",
+"q2": "The album was recorded at the broadcasting studios of the network that distributed Vision On. Who is #1?",
+"gb": "BBC",
+"f1": 0.0
+},
+{
+"id": "2hop__20910_20779",
+"q": "When did the relationship of the person regarded as a feminist during her time and Carlos Leon end?",
+"q1": "Who is the person regarded as a feminist during her time and Carlos Leon's partner?",
+"q2": "When did the relationship of #1 end?",
+"gb": "Madonna",
+"f1": 1.0
+},
+{
+"id": "2hop__836245_51682",
+"q": "when did the country Saldus Municipality is located become part of the Soviet Union?",
+"q1": "In which country is Saldus Municipality located?",
+"q2": "When did #1 become part of the Soviet Union?",
+"gb": "Latvia",
+"f1": 1.0
+},
+{
+"id": "2hop__107246_21517",
+"q": "Denmark, and the country where Himmelbl\u00e5 aired, remained in the Kalmar Union until what year?",
+"q1": "Denmark, and the country where Himmelbl\u00e5 aired, remained in the Kalmar Union until what year?",
+"q2": "Denmark, and the country where Himmelbl\u00e5 aired, remained in the Kalmar Union until what year?",
+"gb": "Norway",
+"f1": 1.0
+},
+{
+"id": "2hop__137051_714072",
+"q": "In what county is the community of Lyons found, in the state where the series My Talk Show is set?",
+"q1": "In which state is the series *My Talk Show* set?",
+"q2": "In what county is the community of Lyons found, in #1?",
+"gb": "Wisconsin",
+"f1": 1.0
+},
+{
+"id": "2hop__784447_126070",
+"q": "Who was in charge of the birth city of Glenhis Hern\u00e1ndez?",
+"q1": "What city was Glenhis Hern\u00e1ndez born in?",
+"q2": "Who was in charge of #1?",
+"gb": "Havana",
+"f1": 1.0
+},
+{
+"id": "2hop__456111_10038",
+"q": "What was the former name of the birthplace of Lou Yun?",
+"q1": "Who is Lou Yun?",
+"q2": "What was the former name of #1?",
+"gb": "Hangzhou",
+"f1": 0.0
+},
+{
+"id": "2hop__84984_54358",
+"q": "When was the capitol of the state with a buffalo on its license plate built?",
+"q1": "Which state has a buffalo on its license plate?",
+"q2": "When was the capitol of #1 built?",
+"gb": "North Dakota",
+"f1": 0.4
+},
+{
+"id": "2hop__305219_92853",
+"q": "Who is the minister of Local government in the country Bindura District is located?",
+"q1": "In which country is Bindura District located?",
+"q2": "Who is the minister of Local government in #1?",
+"gb": "Zimbabwe",
+"f1": 1.0
+},
+{
+"id": "2hop__38200_430",
+"q": "When did Chopin's family move to the city Eisenhower visited in 1945?",
+"q1": "In which city did Eisenhower visit in 1945?",
+"q2": "When did Chopin's family move to #1?",
+"gb": "Warsaw",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__1317_1327",
+"q": "The number of Imax screens in the US and Canada showing the film with a wider UK release than Skyfall was how many?",
+"q1": "Which film has a wider UK release than Skyfall and is shown on Imax screens in the US and Canada?",
+"q2": "How many Imax screens in the US and Canada show #1?",
+"gb": "Spectre.",
+"f1": 0.0
+},
+{
+"id": "2hop__645266_1914",
+"q": "As of 2014, what was the population of the city where The Kitchen is located?",
+"q1": "In which city is The Kitchen located?",
+"q2": "As of 2014, what was the population of #1?",
+"gb": "NYC",
+"f1": 1.0
+},
+{
+"id": "2hop__2938_2738",
+"q": "What minor branch of Buddhism is sometimes attributed to the sutras reserved for those who follow the bodhisattva path?",
+"q1": "Which Buddhist tradition includes sutras reserved for those who follow the bodhisattva path?",
+"q2": "What minor branch of Buddhism is #1 sometimes attributed to?",
+"gb": "Mahayana",
+"f1": 0.0
+},
+{
+"id": "2hop__684353_815069",
+"q": "What record label does Trouble's performer belong to?",
+"q1": "Who is the performer of Trouble?",
+"q2": "What record label does #1 belong to?",
+"gb": "Ray LaMontagne",
+"f1": 1.0
+},
+{
+"id": "2hop__141877_472011",
+"q": "Who is part of the band that performed the song English Settlement?",
+"q1": "Who is the performer of the song English Settlement?",
+"q2": "Who is part of the band that performed #1?",
+"gb": "XTC",
+"f1": 1.0
+},
+{
+"id": "2hop__257846_500443",
+"q": "Who is the sibling of the composer of Downtown?",
+"q1": "Who is the composer of Downtown?",
+"q2": "Who is the sibling of #1?",
+"gb": "Neil Young",
+"f1": 0.0
+},
+{
+"id": "2hop__621474_1136",
+"q": "In what year did the publisher of Uniracers start the development of Twilight Princess?",
+"q1": "Who is the publisher of Uniracers?",
+"q2": "In what year did #1 start the development of Twilight Princess?",
+"gb": "Nintendo",
+"f1": 1.0
+},
+{
+"id": "2hop__13965_14056",
+"q": "When did Henry's favorite child create a new tax on income and moveable goods?",
+"q1": "Who is Henry's favorite child?",
+"q2": "When did #1 create a new tax on income and moveable goods?",
+"gb": "John",
+"f1": 0.0
+},
+{
+"id": "2hop__130701_29363",
+"q": "Who was targeted for defrauding the electoral process, in the state Hotel Courtland is located?",
+"q1": "In which state is Hotel Courtland located?",
+"q2": "Who was targeted for defrauding the electoral process in #1?",
+"gb": "Ohio",
+"f1": 0.0
+},
+{
+"id": "2hop__130729_224276",
+"q": "Who owns Interstate 95, in the state where Jospeh Slocum House is located?",
+"q1": "In which state is the Joseph Slocum House located?",
+"q2": "Who owns Interstate 95 in #1?",
+"gb": "Rhode Island",
+"f1": 0.9090909090909091
+},
+{
+"id": "2hop__131095_85298",
+"q": "How old do you have to be to drink with a parent in the state where WJQM is located?",
+"q1": "In which state is WJQM located?",
+"q2": "How old do you have to be to drink with a parent in the state where #1 is located?",
+"gb": "Wisconsin",
+"f1": 0.0
+},
+{
+"id": "2hop__428289_24352",
+"q": "How long does the biggest celebration in the country of SETAR last?",
+"q1": "What is the biggest celebration in the country of SETAR?",
+"q2": "How long does #1 last?",
+"gb": "Aruba",
+"f1": 0.0
+},
+{
+"id": "2hop__793806_42277",
+"q": "What forest is by the southern border of the death city of Jerzy Passendorfer?",
+"q1": "What is the death city of Jerzy Passendorfer?",
+"q2": "Which forest is by the southern border of #1?",
+"gb": "Warsaw",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__754967_77860",
+"q": "When did the river on which the Palo Verde Dam is located start forming the Grand Canyon?",
+"q1": "Which river on which the Palo Verde Dam is located starts forming the Grand Canyon?",
+"q2": "When did #1 start forming the Grand Canyon?",
+"gb": "Colorado River",
+"f1": 0.923076923076923
+},
+{
+"id": "2hop__51562_207921",
+"q": "In which county of the state where Lars and the Real Girl takes place is the town of Hillsboro?",
+"q1": "In which state does *Lars and the Real Girl* take place?",
+"q2": "In which county of #1 is the town of Hillsboro located?",
+"gb": "Wisconsin",
+"f1": 1.0
+},
+{
+"id": "2hop__299614_748934",
+"q": "What township includes Hopewell, New Jersey, in the county that also contains Poplar Thicket?",
+"q1": "Which county contains Poplar Thicket?",
+"q2": "What township includes Hopewell, New Jersey, in #1?",
+"gb": "Sussex County",
+"f1": 1.0
+},
+{
+"id": "2hop__143071_737459",
+"q": "The creator of Watching the Wheels is whose son?",
+"q1": "Who is the creator of Watching the Wheels?",
+"q2": "Who is the son of #1?",
+"gb": "John Lennon",
+"f1": 0.5
+},
+{
+"id": "2hop__685763_159937",
+"q": "What is the tallest structure in the country where Malkiya is located?",
+"q1": "In which country is Malkiya located?",
+"q2": "What is the tallest structure in #1?",
+"gb": "Bahrain",
+"f1": 1.0
+},
+{
+"id": "2hop__240328_217649",
+"q": "What is the record label of the performer of Father and Daughter?",
+"q1": "Who is the performer of Father and Daughter?",
+"q2": "What is the record label of #1?",
+"gb": "Paul Simon",
+"f1": 0.0
+},
+{
+"id": "2hop__146567_62309",
+"q": "When did the US go to war with the country where Ofusato died?",
+"q1": "In which country did Ofusato die?",
+"q2": "When did the US go to war with #1?",
+"gb": "Korea",
+"f1": 0.0
+},
+{
+"id": "2hop__821094_471321",
+"q": "In what city was Wade Moore educated?",
+"q1": "Where did Wade Moore go to school?",
+"q2": "In what city was #1 located?",
+"gb": "University of Kansas",
+"f1": 1.0
+},
+{
+"id": "2hop__36139_40786",
+"q": "What is the highest court in the group with whom the agreement forms an alliance?",
+"q1": "Which group forms an alliance with the highest court?",
+"q2": "What is the highest court in #1?",
+"gb": "European Union",
+"f1": 1.0
+},
+{
+"id": "2hop__378086_8607",
+"q": "What metropolitan area is the city, that includes the residential area of Kingston, Hampshire, a part of?",
+"q1": "Which city includes the residential area of Kingston, Hampshire?",
+"q2": "What metropolitan area is #1 a part of?",
+"gb": "Portsmouth",
+"f1": 1.0
+},
+{
+"id": "2hop__626351_208194",
+"q": "What is the birth county of Norman Levinson?",
+"q1": "In which county was Norman Levinson born?",
+"q2": "What is the birth county of #1?",
+"gb": "Lynn",
+"f1": 0.0
+},
+{
+"id": "2hop__137031_3836",
+"q": "When did the torch arrive in the region which made Close Escape?",
+"q1": "Which region made Close Escape?",
+"q2": "When did the torch arrive in #1?",
+"gb": "Hong Kong",
+"f1": 1.0
+},
+{
+"id": "2hop__80508_313216",
+"q": "In which municipality is Dean in the country where the TV show Jesse Stone is filmed?",
+"q1": "In which country is the TV show Jesse Stone filmed?",
+"q2": "In which municipality is Dean in #1?",
+"gb": "Nova Scotia",
+"f1": 1.0
+},
+{
+"id": "2hop__128979_11443",
+"q": "What was the average household size in the city served by WAJM?",
+"q1": "What city does WAJM serve?",
+"q2": "What was the average household size in #1?",
+"gb": "Atlantic City",
+"f1": 0.0
+},
+{
+"id": "2hop__161955_609442",
+"q": "Which range is Garfield Peak in the state of Hinsdale County part of?",
+"q1": "Which range does Garfield Peak belong to?",
+"q2": "Which range is Garfield Peak in Hinsdale County part of, according to #1?",
+"gb": "Colorado",
+"f1": 0.0
+},
+{
+"id": "2hop__106999_54210",
+"q": "What was the currency in the country of Mieskuoro Huutajat before the euro?",
+"q1": "What country is Mieskuoro Huutajat from?",
+"q2": "What was the currency in #1 before the euro?",
+"gb": "Finland",
+"f1": 1.0
+},
+{
+"id": "2hop__373928_162253",
+"q": "When was Siemens opened in the city where Andreas von Tuhr was born?",
+"q1": "In which city was Andreas von Tuhr born?",
+"q2": "When was Siemens opened in #1?",
+"gb": "St Petersburg",
+"f1": 1.0
+},
+{
+"id": "2hop__27073_5400",
+"q": "What is an annual event hosted by the largest metro area in Oklahoma as of 2010?",
+"q1": "Which is the largest metro area in Oklahoma as of 2010?",
+"q2": "What is an annual event hosted by #1?",
+"gb": "Oklahoma City",
+"f1": 0.0
+},
+{
+"id": "2hop__87221_773040",
+"q": "The album named after the lead guitar player on While My Guitar gently Weeps was produced by whom?",
+"q1": "Who is the lead guitar player on While My Guitar Gently Weeps?",
+"q2": "Who produced the album named after #1?",
+"gb": "Clapton",
+"f1": 0.0
+},
+{
+"id": "2hop__35928_48057",
+"q": "Whe did sales of petrol by liters begin in the country owning RAF Brize Norton?",
+"q1": "In which country does RAF Brize Norton belong?",
+"q2": "When did sales of petrol by liters begin in #1?",
+"gb": "the UK",
+"f1": 0.0
+},
+{
+"id": "2hop__421479_83906",
+"q": "When did Ella Fitzgerald sing let's call the whole thing off with the performer of We Have All the Time in the World?",
+"q1": "Who is the performer of \"We Have All the Time in the World\"?",
+"q2": "When did Ella Fitzgerald sing \"Let's Call the Whole Thing Off\" with #1?",
+"gb": "Louis Armstrong",
+"f1": 1.0
+},
+{
+"id": "2hop__171922_90536",
+"q": "who was manager when the team Tommy Logan plays for won champions league?",
+"q1": "Which team does Tommy Logan play for?",
+"q2": "Who was the manager of #1 when they won the Champions League?",
+"gb": "Chelsea",
+"f1": 0.0
+},
+{
+"id": "2hop__41221_35376",
+"q": "Which language is spoken by the people that lived in the British Isles during the regime under which the oldest recorded incident of civil disobedience occurred?",
+"q1": "Under which regime did the oldest recorded incident of civil disobedience occur in the British Isles?",
+"q2": "Which language is spoken by the people who lived in the British Isles during #1?",
+"gb": "during the Roman Empire",
+"f1": 0.0
+},
+{
+"id": "2hop__129910_92189",
+"q": "Where are the badlands located in the state where Episcopal Church of All Angels is located?",
+"q1": "In which state is the Episcopal Church of All Angels located?",
+"q2": "Where are the badlands located in #1?",
+"gb": "South Dakota",
+"f1": 1.0
+},
+{
+"id": "2hop__27065_237509",
+"q": "Who is the spouse of the last Democratic presidential candidate to win any counties in Oklahoma?",
+"q1": "Who is the last Democratic presidential candidate to win any counties in Oklahoma?",
+"q2": "Who is the spouse of #1?",
+"gb": "Al Gore",
+"f1": 1.0
+},
+{
+"id": "2hop__824500_69926",
+"q": "In WWII when did Australian troops fight in the birthplace of Erin Stewart?",
+"q1": "Where was Erin Stewart born?",
+"q2": "In WWII, when did Australian troops fight in #1?",
+"gb": "New Britain",
+"f1": 0.0
+},
+{
+"id": "2hop__36646_77166",
+"q": "How many members are in the agency from which countries are excluded due to lack of strategic and hard power?",
+"q1": "How many members are in the agency from which countries are excluded due to lack of strategic and hard power?",
+"q2": "How many members are in the agency from which countries are excluded due to lack of strategic and hard power?",
+"gb": "UN Security Council",
+"f1": 0.0
+},
+{
+"id": "2hop__457518_162253",
+"q": "When was the brand opened in city where Auguste de Montferrand died?",
+"q1": "In which city did Auguste de Montferrand die?",
+"q2": "When was the brand opened in #1?",
+"gb": "St Petersburg",
+"f1": 0.0
+},
+{
+"id": "2hop__493280_162108",
+"q": "Who collaborated with the performer of Hero of the Day?",
+"q1": "Who is the performer of Hero of the Day?",
+"q2": "Who collaborated with #1?",
+"gb": "Metallica",
+"f1": 0.0
+},
+{
+"id": "2hop__686983_511430",
+"q": "Who is the screenwriter of the film named after the country where Bustros Palace is found?",
+"q1": "In which country is Bustros Palace found?",
+"q2": "Who is the screenwriter of the film named after #1?",
+"gb": "Lebanon",
+"f1": 1.0
+},
+{
+"id": "2hop__129910_366974",
+"q": "The Senate of the US state having Episcopal Church of All Angels is part of what?",
+"q1": "Which U.S. state has the Episcopal Church of All Angels as its state church?",
+"q2": "The Senate of #1 is part of what?",
+"gb": "South Dakota",
+"f1": 1.0
+},
+{
+"id": "2hop__476865_44326",
+"q": "Who plays Michael Myers in the version of Halloween directed by the performer who released Educated Horses?",
+"q1": "Who is the performer who released *Educated Horses*?",
+"q2": "Who plays Michael Myers in the version of *Halloween* directed by #1?",
+"gb": "Rob Zombie",
+"f1": 1.0
+},
+{
+"id": "2hop__328708_161223",
+"q": "What is the highest point which it can be found in the country Galilaya is located?",
+"q1": "In which country is Galilaya located?",
+"q2": "What is the highest point in the country that #1 is located in?",
+"gb": "Uganda",
+"f1": 0.0
+},
+{
+"id": "2hop__528481_37260",
+"q": "When were the mosaics at the church in the headquarter of IONOS created?",
+"q1": "Which church is located at the headquarter of IONOS?",
+"q2": "When were the mosaics at #1 created?",
+"gb": "Thessaloniki",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__523467_52667",
+"q": "When was the first railway between Ali Abbasi's birth city and Kotri constructed?",
+"q1": "In which city was Ali Abbasi born?",
+"q2": "When was the first railway between #1 and Kotri constructed?",
+"gb": "Karachi",
+"f1": 0.0
+},
+{
+"id": "2hop__104304_58946",
+"q": "When did the civil war in the country Ita Ford is from start?",
+"q1": "Which country is Ita Ford from?",
+"q2": "When did the civil war in #1 start?",
+"gb": "El Salvador",
+"f1": 0.0
+},
+{
+"id": "2hop__352532_835780",
+"q": "Mark A. Carleton's birthplace shares a border with which other county?",
+"q1": "Where was Mark A. Carleton born?",
+"q2": "Which county shares a border with #1?",
+"gb": "Monroe County",
+"f1": 0.5
+},
+{
+"id": "2hop__71274_126084",
+"q": "Who was in charge of the place where the Maratha Kingdom was located?",
+"q1": "Where was the Maratha Kingdom located?",
+"q2": "Who was in charge of #1?",
+"gb": "Maharashtra",
+"f1": 0.0
+},
+{
+"id": "2hop__106125_20644",
+"q": "What is the race of the majority of the population of the country that CIS 50MG originated?",
+"q1": "In which country did CIS 50MG originate?",
+"q2": "What is the race of the majority of the population of #1?",
+"gb": "Singapore",
+"f1": 1.0
+},
+{
+"id": "2hop__559251_39300",
+"q": "Which art museum does the past employer of Catherine LaCugna administer?",
+"q1": "Who is the past employer of Catherine LaCugna?",
+"q2": "Which art museum does #1 administer?",
+"gb": "Notre Dame",
+"f1": 0.0
+},
+{
+"id": "2hop__775084_76347",
+"q": "What subgenre of blues is associated with the performer of Rollin' Stone: The Golden Anniversary Collection?",
+"q1": "Who is the performer of *Rollin' Stone: The Golden Anniversary Collection*?",
+"q2": "What subgenre of blues is associated with #1?",
+"gb": "Muddy Waters",
+"f1": 1.0
+},
+{
+"id": "2hop__589653_99606",
+"q": "What continent contains the country where Fatao is located?",
+"q1": "In which country is Fatao located?",
+"q2": "What continent contains #1?",
+"gb": "Tuvalu",
+"f1": 1.0
+},
+{
+"id": "2hop__13647_13640",
+"q": "What kind of agency did Dr. T.R.M. Howard criticize?",
+"q1": "Who did Dr. T.R.M. Howard criticize?",
+"q2": "What kind of agency did #1 criticize?",
+"gb": "FBI",
+"f1": 0.0
+},
+{
+"id": "2hop__430054_3429",
+"q": "What show helped launched the career of the singer of I Do Not Hook Up?",
+"q1": "Who is the singer of \"I Do Not Hook Up\"?",
+"q2": "What show helped launch the career of #1?",
+"gb": "Kelly Clarkson",
+"f1": 1.0
+},
+{
+"id": "2hop__143651_70019",
+"q": "What is the highest point in the US state whose name is used by the band singing Dixieland Delight?",
+"q1": "Which US state is associated with the band singing Dixieland Delight?",
+"q2": "What is the highest point in #1?",
+"gb": "Alabama",
+"f1": 1.0
+},
+{
+"id": "2hop__460439_25111",
+"q": "What tradition does the legal system, of the Chinese territory containing Coloane Park, come from?",
+"q1": "Which Chinese territory contains Coloane Park?",
+"q2": "What tradition does the legal system of #1 come from?",
+"gb": "Macau",
+"f1": 0.0
+},
+{
+"id": "2hop__740102_91983",
+"q": "When do we vote for governor in the state where Song of the Pines is set?",
+"q1": "In which state is Song of the Pines set?",
+"q2": "When do we vote for governor in #1?",
+"gb": "Wisconsin",
+"f1": 1.0
+},
+{
+"id": "2hop__48667_3315",
+"q": "How many seasons was the performer who wrote All I Want For Christmas is You a judge on American Idol?",
+"q1": "Who is the performer of All I Want For Christmas is You?",
+"q2": "How many seasons was #1 a judge on American Idol?",
+"gb": "Mariah Carey",
+"f1": 1.0
+},
+{
+"id": "2hop__637577_53762",
+"q": "Which mountain range separates Kinnaur and Spiti from the region where Nawang Khechog was born?",
+"q1": "In which region was Nawang Khechog born?",
+"q2": "Which mountain range separates Kinnaur and Spiti from #1?",
+"gb": "Tibet",
+"f1": 1.0
+},
+{
+"id": "2hop__664961_83050",
+"q": "When did the roof gardens above where Edwardes Square is located open to the public?",
+"q1": "Where is Edwardes Square located?",
+"q2": "When did the roof gardens above #1 open to the public?",
+"gb": "Kensington",
+"f1": 0.0
+},
+{
+"id": "2hop__361127_140822",
+"q": "Where can you find the show ESPN College Football on the original broadcaster of Angie?",
+"q1": "What is the original broadcaster of Angie?",
+"q2": "Where can you find the show ESPN College Football on #1?",
+"gb": "ABC",
+"f1": 0.0
+},
+{
+"id": "2hop__129288_160300",
+"q": "What is the population ranking of the state where Harrah's Casino Tunica is located?",
+"q1": "In which state is Harrah's Casino Tunica located?",
+"q2": "What is the population ranking of #1?",
+"gb": "Mississippi",
+"f1": 1.0
+},
+{
+"id": "2hop__35384_15345",
+"q": "What is Elizabeth's ranking in the church founded by King Henry VIII?",
+"q1": "What is the name of the church founded by King Henry VIII?",
+"q2": "What is Elizabeth's ranking in #1?",
+"gb": "Church of England",
+"f1": 1.0
+},
+{
+"id": "2hop__837082_58450",
+"q": "Who plays the performer of Wise Up in the movie I Can Only Imagine?",
+"q1": "Who is the performer of \"Wise Up\"?",
+"q2": "Who plays #1 in the movie *I Can Only Imagine*?",
+"gb": "Amy Grant",
+"f1": 1.0
+},
+{
+"id": "2hop__630843_58935",
+"q": "When was the last time Auburn won in Tim Breaux's birthplace?",
+"q1": "Where was Tim Breaux born?",
+"q2": "When was the last time Auburn won in #1?",
+"gb": "Baton Rouge",
+"f1": 0.0
+},
+{
+"id": "2hop__269534_261338",
+"q": "Who is the performer of the album using the name of the country containing Urdaneta?",
+"q1": "Which country contains Urdaneta?",
+"q2": "Who is the performer of the album using the name of #1?",
+"gb": "Venezuela",
+"f1": 0.0
+},
+{
+"id": "2hop__664398_909",
+"q": "When did the 5th Dalai Lama gain political control over Marpa Lotsawa's place of birth?",
+"q1": "Where was Marpa Lotsawa born?",
+"q2": "When did the 5th Dalai Lama gain political control over #1?",
+"gb": "Tibet",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__95494_86737",
+"q": "Who played Aunt Bea on the show named after the person who was featured in the film Onionhead?",
+"q1": "Who is the person featured in the film Onionhead?",
+"q2": "Who played Aunt Bea on the show named after #1?",
+"gb": "Andy Griffith",
+"f1": 1.0
+},
+{
+"id": "2hop__470675_50751",
+"q": "What is the name for the spirits associated with Shintoism, in the original language of the song Nobody Knows?",
+"q1": "What is the original language of the song \"Nobody Knows\"?",
+"q2": "What is the name for the spirits associated with Shintoism in #1?",
+"gb": "Japanese",
+"f1": 0.0
+},
+{
+"id": "2hop__787940_83984",
+"q": "What movie stars Morgan Freeman, Robert De Niro and the producer of The Jewel of the Nile?",
+"q1": "Who is the producer of *The Jewel of the Nile*?",
+"q2": "What movie stars Morgan Freeman, Robert De Niro, and #1?",
+"gb": "Michael Douglas",
+"f1": 1.0
+},
+{
+"id": "2hop__121310_7672",
+"q": "What was the first year men's basketball was played at Donald Worster's alma mater?",
+"q1": "What is Donald Worster's alma mater?",
+"q2": "What was the first year men's basketball was played at #1?",
+"gb": "University of Kansas",
+"f1": 0.0
+},
+{
+"id": "2hop__104341_54749",
+"q": "Why does the flag of the US territory that Luis Villafa\u00f1e is from have one star?",
+"q1": "Which U.S. territory is Luis Villafa\u00f1e from?",
+"q2": "Why does the flag of #1 have one star?",
+"gb": "Puerto Rico",
+"f1": 0.888888888888889
+},
+{
+"id": "2hop__817189_377891",
+"q": "What research organization is the Science Museum, in the birthplace of Marta Prieto, a part of?",
+"q1": "In which city was Marta Prieto born?",
+"q2": "What research organization is the Science Museum, in #1, a part of?",
+"gb": "Seville",
+"f1": 1.0
+},
+{
+"id": "2hop__563_568792",
+"q": "Who is the child of the host of the gathering where Fr\u00e9d\u00e9ric was introduced to George Sand?",
+"q1": "Who is the host of the gathering where Fr\u00e9d\u00e9ric was introduced to George Sand?",
+"q2": "Who is the child of #1?",
+"gb": "Marie d'Agoult",
+"f1": 1.0
+},
+{
+"id": "2hop__845898_84477",
+"q": "When did the operator of SS Zealandic go out of business?",
+"q1": "Which company operated the SS Zealandic?",
+"q2": "When did #1 go out of business?",
+"gb": "White Star Line",
+"f1": 1.0
+},
+{
+"id": "2hop__103543_43495",
+"q": "Who is the Minister of Defense in the country where Betty Kaunda was born?",
+"q1": "In which country was Betty Kaunda born?",
+"q2": "Who is the Minister of Defense in #1?",
+"gb": "Zambia",
+"f1": 1.0
+},
+{
+"id": "2hop__637715_500943",
+"q": "What conflict did the spouse of Maria Ley-Piscator fight in?",
+"q1": "Who is the spouse of Maria Ley-Piscator?",
+"q2": "In what conflict did #1 fight?",
+"gb": "Erwin Piscator",
+"f1": 0.4
+},
+{
+"id": "2hop__370717_21587",
+"q": "When was the city where Harold Wethey died founded?",
+"q1": "In which city did Harold Wethey die?",
+"q2": "When was #1 founded?",
+"gb": "Ann Arbor",
+"f1": 1.0
+},
+{
+"id": "2hop__262942_73460",
+"q": "When did the country where Idikundu is located leave the British Empire?",
+"q1": "In which country is Idikundu located?",
+"q2": "When did #1 leave the British Empire?",
+"gb": "Sri Lanka",
+"f1": 1.0
+},
+{
+"id": "2hop__490962_62766",
+"q": "Who plays the creator of Sunflowers in Doctor Who?",
+"q1": "Who is the creator of Sunflowers in Doctor Who?",
+"q2": "Who plays #1 in Doctor Who?",
+"gb": "Vincent van Gogh",
+"f1": 0.0
+},
+{
+"id": "2hop__103007_43178",
+"q": "Who is the first prime minister of the country where Bernard Tan was in?",
+"q1": "In which country was Bernard Tan?",
+"q2": "Who is the first prime minister of #1?",
+"gb": "Singapore",
+"f1": 1.0
+},
+{
+"id": "2hop__187173_131886",
+"q": "Which is the body of water by the region containing Cary?",
+"q1": "In which region is Cary located?",
+"q2": "Which body of water lies near #1?",
+"gb": "County Antrim",
+"f1": 0.0
+},
+{
+"id": "2hop__13398_25986",
+"q": "What is character set incorporating ASCII available through Windows on?",
+"q1": "What operating system includes ASCII character set available through Windows?",
+"q2": "What is character set incorporating ASCII available through #1?",
+"gb": "Unicode",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__518831_368521",
+"q": "In what county can you find the city where the band To My Surprise formed?",
+"q1": "In which city did the band To My Surprise form?",
+"q2": "In what county can you find #1?",
+"gb": "Des Moines",
+"f1": 0.0
+},
+{
+"id": "2hop__637906_256079",
+"q": "The city where Lakes International Language Academy is located is in which county?",
+"q1": "The city where Lakes International Language Academy is located is in which county?",
+"q2": "The city where Lakes International Language Academy is located is in which county?",
+"gb": "Forest Lake",
+"f1": 0.5
+},
+{
+"id": "2hop__131831_73786",
+"q": "When is election day for senate in the state where WZYP is located?",
+"q1": "In which state is WZYP located?",
+"q2": "When is election day for the senate in #1?",
+"gb": "Alabama",
+"f1": 1.0
+},
+{
+"id": "2hop__651680_121880",
+"q": "What college did the performer of The Definitive Collection attend?",
+"q1": "Who is the performer of The Definitive Collection?",
+"q2": "What college did #1 attend?",
+"gb": "Lou Reed",
+"f1": 0.3333333333333333
+},
+{
+"id": "2hop__63373_43057",
+"q": "When did the state the movie Just Getting Started filmed become part of the US?",
+"q1": "In which state was the movie *Just Getting Started* filmed?",
+"q2": "When did #1 become part of the US?",
+"gb": "New Mexico",
+"f1": 1.0
+},
+{
+"id": "2hop__682716_373394",
+"q": "What county shares a border with the county of Ross Township?",
+"q1": "Which county borders Ross Township?",
+"q2": "What county shares a border with #1?",
+"gb": "Jefferson County",
+"f1": 0.5
+},
+{
+"id": "2hop__632204_5111",
+"q": "Where in Plymouth is the operator of Oakley class lifeboat based?",
+"q1": "Which operator runs the Oakley class lifeboat in Plymouth?",
+"q2": "Where in Plymouth is #1 based?",
+"gb": "Royal National Lifeboat Institution",
+"f1": 1.0
+},
+{
+"id": "2hop__130718_92585",
+"q": "Who formed and first came to the colony where Jacob Highbarger House is located?",
+"q1": "Where is the Jacob Highbarger House located?",
+"q2": "Who formed and first came to #1?",
+"gb": "Maryland",
+"f1": 1.0
+},
+{
+"id": "2hop__73593_10531",
+"q": "In what century did Muslims conquer the region where the Sahara is located on a map?",
+"q1": "In what century did Muslims conquer the region where the Sahara is located on a map?",
+"q2": "In what century did Muslims conquer the region where the Sahara is located on a map?",
+"gb": "North Africa",
+"f1": 0.0
+},
+{
+"id": "2hop__108140_306274",
+"q": "Who is the sibling of the artist who painted the Portrait of Baudouin de Lannoy?",
+"q1": "Who is the artist who painted the Portrait of Baudouin de Lannoy?",
+"q2": "Who is the sibling of #1?",
+"gb": "Jan van Eyck",
+"f1": 1.0
+},
+{
+"id": "2hop__786333_44191",
+"q": "When was the last earthquake in the country where the town of El Chupadero is found?",
+"q1": "In which country is the town of El Chupadero located?",
+"q2": "When was the last earthquake in #1?",
+"gb": "El Salvador",
+"f1": 0.0
+},
+{
+"id": "2hop__781452_506247",
+"q": "What county shares a border with another county that contains Pelton Dam?",
+"q1": "Which county contains Pelton Dam?",
+"q2": "What county shares a border with #1?",
+"gb": "Jefferson County",
+"f1": 0.0
+},
+{
+"id": "2hop__750701_529125",
+"q": "What is the seat of the county where Sheep Ranch is located?",
+"q1": "Where is Sheep Ranch located?",
+"q2": "What is the seat of the county that contains #1?",
+"gb": "Calaveras County",
+"f1": 1.0
+},
+{
+"id": "2hop__662321_44637",
+"q": "Where is the district Ullscarf is part of located in the UK?",
+"q1": "Which district is Ullscarf part of?",
+"q2": "Where is #1 located in the UK?",
+"gb": "Lake District",
+"f1": 0.0
+},
+{
+"id": "2hop__129332_158749",
+"q": "What was the population of the state where KKWE is located by 1900?",
+"q1": "In which state is KKWE located?",
+"q2": "What was the population of #1 by 1900?",
+"gb": "Minnesota",
+"f1": 0.8
+},
+{
+"id": "2hop__57665_84128",
+"q": "How long is a governor's term in the state where fried green tomatoes set in?",
+"q1": "In which state do fried green tomatoes set?",
+"q2": "How long is a governor's term in #1?",
+"gb": "Alabama",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__235595_31113",
+"q": "When did the author of The Principles of Psychology die?",
+"q1": "Who is the author of The Principles of Psychology?",
+"q2": "When did #1 die?",
+"gb": "William James",
+"f1": 1.0
+},
+{
+"id": "2hop__699946_80884",
+"q": "When was the party that Noushig Eloyan is a member of formed?",
+"q1": "Which party is Noushig Eloyan a member of?",
+"q2": "When was #1 formed?",
+"gb": "Liberal Party of Canada",
+"f1": 1.0
+},
+{
+"id": "2hop__347280_83687",
+"q": "What is the population of the city where Third Street Aleworks is located?",
+"q1": "In which city is Third Street Aleworks located?",
+"q2": "What is the population of #1?",
+"gb": "Santa Rosa",
+"f1": 1.0
+},
+{
+"id": "2hop__658967_63644",
+"q": "Who sang Up Where We Belong with Heart & Soul's singer?",
+"q1": "Who is the singer of Heart & Soul?",
+"q2": "Who sang \"Up Where We Belong\" with #1?",
+"gb": "Joe Cocker",
+"f1": 1.0
+},
+{
+"id": "2hop__136481_73753",
+"q": "When did the drinking age increased to 21 in the state where Driftless takes place?",
+"q1": "In which state does Driftless take place?",
+"q2": "When did the drinking age increase to 21 in #1?",
+"gb": "Wisconsin",
+"f1": 1.0
+},
+{
+"id": "2hop__203695_82827",
+"q": "When did the performer of I'm Your Baby Tonight record The Greatest Love of All?",
+"q1": "Who is the performer of \"I'm Your Baby Tonight\"?",
+"q2": "When did #1 record \"The Greatest Love of All\"?",
+"gb": "Whitney Houston",
+"f1": 1.0
+},
+{
+"id": "2hop__167144_69489",
+"q": "How old do you have to be to buy a handgun in the state where the mouth of the English river is located?",
+"q1": "In which state is the mouth of the English river located?",
+"q2": "How old do you have to be to buy a handgun in #1?",
+"gb": "Iowa",
+"f1": 0.5
+},
+{
+"id": "2hop__167063_58946",
+"q": "When did the civil war in the country where Cuscatancingo is located start?",
+"q1": "In which country is Cuscatancingo located?",
+"q2": "When did the civil war in #1 start?",
+"gb": "El Salvador",
+"f1": 1.0
+},
+{
+"id": "2hop__573876_53519",
+"q": "What is the most common source of electricity in the province Provencher is located in?",
+"q1": "In which province is Provencher located?",
+"q2": "What is the most common source of electricity in #1?",
+"gb": "Manitoba",
+"f1": 0.0
+},
+{
+"id": "2hop__533981_74309",
+"q": "Who is the current prime minister of the country Hopewell, Hanover is located?",
+"q1": "In which country is Hanover located?",
+"q2": "Who is the current prime minister of #1?",
+"gb": "Jamaica",
+"f1": 1.0
+},
+{
+"id": "2hop__242144_64290",
+"q": "When did the team Brandon London was a member of last win the Super Bowl?",
+"q1": "Which team was Brandon London a member of?",
+"q2": "When did #1 last win the Super Bowl?",
+"gb": "Giants",
+"f1": 0.0
+},
+{
+"id": "2hop__732591_48770",
+"q": "Who build the largest ancient Inca empire in the region that American studies is a facet of?",
+"q1": "In which region was the largest ancient Inca empire located?",
+"q2": "Who built the largest ancient Inca empire in #1?",
+"gb": "the Americas",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__728789_81963",
+"q": "Who is currently defense minister of the state where Bendebembli is located?",
+"q1": "In which state is Bendebembli located?",
+"q2": "Who is currently the defense minister of #1?",
+"gb": "Karnataka",
+"f1": 1.0
+},
+{
+"id": "2hop__68023_539716",
+"q": "What county is Hebron in the island where Anne of Green Gables takes place located in?",
+"q1": "Where does Anne of Green Gables take place?",
+"q2": "What county is Hebron in #1?",
+"gb": "Prince Edward Island",
+"f1": 1.0
+},
+{
+"id": "2hop__763678_127255",
+"q": "When was the record label of Factory Floor established?",
+"q1": "Who is the performer of Factory Floor?",
+"q2": "When was the record label of #1 established?",
+"gb": "DFA Records",
+"f1": 0.0
+},
+{
+"id": "2hop__80584_158749",
+"q": "What was the population in 1900 of the state with walnut grove?",
+"q1": "Which state has walnut grove?",
+"q2": "What was the population in 1900 of #1?",
+"gb": "Minnesota",
+"f1": 0.8
+},
+{
+"id": "2hop__10253_92121",
+"q": "What is the weight of the 2018 trophy from the event that was the first HDTV broadcast in Europe?",
+"q1": "What is the name of the event that was the first HDTV broadcast in Europe?",
+"q2": "What is the weight of the 2018 trophy from #1?",
+"gb": "FIFA World Cup",
+"f1": 1.0
+},
+{
+"id": "2hop__557599_55607",
+"q": "When did All Bad singer's Flatline come out?",
+"q1": "Who is the singer of the song \"Flatline\"?",
+"q2": "When did #1's album *All Bad* come out?",
+"gb": "Justin Bieber",
+"f1": 0.0
+},
+{
+"id": "2hop__103771_68379",
+"q": "When did the country that the entertainer Harrysong was from, become a member of OPEC?",
+"q1": "Which country was the entertainer Harrysong from?",
+"q2": "When did #1 become a member of OPEC?",
+"gb": "Nigeria",
+"f1": 0.0
+},
+{
+"id": "2hop__12247_44760",
+"q": "What is the climate like where the RSA Security Conference is held?",
+"q1": "Where is the RSA Security Conference held?",
+"q2": "What is the climate like in #1?",
+"gb": "San Francisco",
+"f1": 0.5714285714285715
+},
+{
+"id": "2hop__711157_49333",
+"q": "When did the currencies of the country that holds the town of Macia first come into circulation?",
+"q1": "Which country holds the town of Macia?",
+"q2": "When did the currencies of #1 first come into circulation?",
+"gb": "Mozambique",
+"f1": 1.0
+},
+{
+"id": "2hop__62588_20909",
+"q": "Who wrote that the person who played Evita in the movie Evita is an almost sacred feminist icon?",
+"q1": "Who played Evita in the movie Evita?",
+"q2": "Who wrote that #1 is an almost sacred feminist icon?",
+"gb": "Madonna",
+"f1": 1.0
+},
+{
+"id": "2hop__330001_69489",
+"q": "How old do you have to be to buy a handgun in the state where Patty Waters was born?",
+"q1": "In which state was Patty Waters born?",
+"q2": "How old do you have to be to buy a handgun in #1?",
+"gb": "Iowa",
+"f1": 0.5
+},
+{
+"id": "2hop__723049_32463",
+"q": "In which part of the city WCHS is licensed to broadcast to does Interstate 26 start?",
+"q1": "In which part of the city is WCHS licensed to broadcast?",
+"q2": "In which part of the city does Interstate 26 start, relative to #1?",
+"gb": "Charleston",
+"f1": 1.0
+},
+{
+"id": "2hop__158048_79459",
+"q": "Why was the country where taekwondo is originally from divided at the 38th parallel at the end of WW2?",
+"q1": "Why was the country where taekwondo is originally from divided at the 38th parallel at the end of WW2?",
+"q2": "Why was the country where taekwondo is originally from divided at the 38th parallel at the end of WW2?",
+"gb": "Korea",
+"f1": 0.0
+},
+{
+"id": "2hop__341145_57623",
+"q": "Who wrote the national anthem of the country where Little Salvador Island is located?",
+"q1": "In which country is Little Salvador Island located?",
+"q2": "Who wrote the national anthem of #1?",
+"gb": "The Bahamas",
+"f1": 1.0
+},
+{
+"id": "2hop__542357_4018",
+"q": "When does the country AS Lokole plays for experience dry season?",
+"q1": "Which country does AS Lokole play for?",
+"q2": "When does the country #1 experience dry season?",
+"gb": "Congo",
+"f1": 1.0
+},
+{
+"id": "2hop__370058_89167",
+"q": "When did the iPhone 6s Plus of the SK8 developer come out?",
+"q1": "Which iPhone model did the SK8 developer develop?",
+"q2": "When did #1 come out?",
+"gb": "Apple",
+"f1": 1.0
+},
+{
+"id": "2hop__685043_565529",
+"q": "What province is Boris Goldstein's place of birth situated in?",
+"q1": "Where was Boris Goldstein born?",
+"q2": "What province is #1 situated in?",
+"gb": "Odessa",
+"f1": 1.0
+},
+{
+"id": "2hop__364563_47348",
+"q": "Who introduced the first microprocessor for the developer of Kentsfield in 1971?",
+"q1": "Who is the developer of Kentsfield?",
+"q2": "Who introduced the first microprocessor for #1 in 1971?",
+"gb": "Intel",
+"f1": 0.4444444444444445
+},
+{
+"id": "2hop__5991_46031",
+"q": "In what form was the first book from the writer who mentioned The Angel pub published?",
+"q1": "What is the name of the writer who mentioned The Angel pub?",
+"q2": "In what form was the first book by #1 published?",
+"gb": "Charles Dickens",
+"f1": 0.0
+},
+{
+"id": "2hop__150590_15815",
+"q": "What day did the Swapnote publisher unveil the new systems?",
+"q1": "Who is the publisher of Swapnote?",
+"q2": "What day did #1 unveil the new systems?",
+"gb": "Nintendo",
+"f1": 0.0
+},
+{
+"id": "2hop__784530_135304",
+"q": "Who is the mother for the person who wrote the song All Summer Long?",
+"q1": "Who wrote the song All Summer Long?",
+"q2": "Who is the mother of #1?",
+"gb": "John Cale",
+"f1": 1.0
+},
+{
+"id": "2hop__149829_432788",
+"q": "Who is a cast member on the show which Max Hoyland is from?",
+"q1": "Which show is Max Hoyland from?",
+"q2": "Who is a cast member on #1?",
+"gb": "Neighbours",
+"f1": 0.0
+},
+{
+"id": "2hop__129115_620955",
+"q": "What area does the state where Butterfly Pond locates contain?",
+"q1": "In which state is Butterfly Pond located?",
+"q2": "What area does the state where #1 is located contain?",
+"gb": "Rhode Island",
+"f1": 0.5
+},
+{
+"id": "2hop__751822_258760",
+"q": "Who performed in the album Live in the city where Damien Magee was born?",
+"q1": "In which city was Damien Magee born?",
+"q2": "Who performed in the album *Live* in #1?",
+"gb": "Belfast",
+"f1": 1.0
+},
+{
+"id": "2hop__316124_126060",
+"q": "Who was in charge of William Boone's city of birth?",
+"q1": "In which city was William Boone born?",
+"q2": "Who was in charge of #1?",
+"gb": "Cincinnati",
+"f1": 0.0
+},
+{
+"id": "2hop__601857_47779",
+"q": "When did trolley buses stop running in the birthplace of George Shipley?",
+"q1": "In which city did trolley buses stop running?",
+"q2": "When did trolley buses stop running in #1?",
+"gb": "Newcastle",
+"f1": 0.0
+},
+{
+"id": "2hop__446970_49333",
+"q": "When was the first circulation of currency for the country where Balama is located?",
+"q1": "In which country is Balama located?",
+"q2": "When was the first circulation of currency for #1?",
+"gb": "Mozambique",
+"f1": 1.0
+},
+{
+"id": "2hop__142523_20779",
+"q": "When did the performer of \"Love Profusion\" end their relationship with Carlos Leon?",
+"q1": "Who is the performer of \"Love Profusion\"?",
+"q2": "When did #1 end their relationship with Carlos Leon?",
+"gb": "Madonna",
+"f1": 1.0
+},
+{
+"id": "2hop__490893_851569",
+"q": "In which county is the city where Manuel Dominguez High School is located?",
+"q1": "In which city is Manuel Dominguez High School located?",
+"q2": "In which county is #1 located?",
+"gb": "Compton",
+"f1": 1.0
+},
+{
+"id": "2hop__517689_61424",
+"q": "During the cold war, what happened to the country where Phnom Aural is found?",
+"q1": "What country is Phnom Aural located in?",
+"q2": "During the Cold War, what happened to #1?",
+"gb": "Cambodia",
+"f1": 0.0
+},
+{
+"id": "2hop__579172_373394",
+"q": "Which county borders the county where Rose Township is located?",
+"q1": "In which county is Rose Township located?",
+"q2": "Which county borders #1?",
+"gb": "Jefferson County",
+"f1": 0.5
+},
+{
+"id": "2hop__615307_514685",
+"q": "The old form of the language known by Mahsati is a part of what larger group of languages?",
+"q1": "What is the old form of the language known as Mahsati?",
+"q2": "What larger group of languages includes #1?",
+"gb": "Persian",
+"f1": 0.0
+},
+{
+"id": "2hop__21555_26878",
+"q": "What is the second largest library in the country that Jacques Couer was from?",
+"q1": "In which country was Jacques Couer from?",
+"q2": "What is the second largest library in the country that #1 was from?",
+"gb": "France",
+"f1": 1.0
+},
+{
+"id": "2hop__388013_45731",
+"q": "What part of Utah is the city Palace of Buddies formed?",
+"q1": "In which part of Utah is the city Palace of Buddies located?",
+"q2": "What part of Utah is the city #1 formed?",
+"gb": "Salt Lake City",
+"f1": 0.6
+},
+{
+"id": "2hop__65749_92014",
+"q": "Who was in charge of the colony which later became the state where The Conjuring takes place?",
+"q1": "Which state did The Conjuring take place in?",
+"q2": "Who was in charge of the colony which later became #1?",
+"gb": "Rhode Island",
+"f1": 1.0
+},
+{
+"id": "2hop__67752_633514",
+"q": "What is the birthplace of the writer of the song Say You Won't Let Go?",
+"q1": "Who is the writer of the song \"Say You Won't Let Go\"?",
+"q2": "What is the birthplace of #1?",
+"gb": "James Arthur",
+"f1": 1.0
+},
+{
+"id": "2hop__106267_3836",
+"q": "When did the torch arrive in the country which made Lives of Omission?",
+"q1": "Which country made *Lives of Omission*?",
+"q2": "When did the torch arrive in #1?",
+"gb": "Hong Kong",
+"f1": 1.0
+},
+{
+"id": "2hop__50706_88700",
+"q": "What spacecraft used the gravitational pull of the planet that the trophy awarded at the annual Montreal fireworks festival, takes its name from?",
+"q1": "Which planet is the trophy awarded at the annual Montreal fireworks festival named after?",
+"q2": "What spacecraft uses the gravitational pull of #1?",
+"gb": "Jupiter",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__157343_486194",
+"q": "Who is the father of Lady Xu Xinyue's spouse?",
+"q1": "Who is the spouse of Lady Xu Xinyue?",
+"q2": "Who is the father of #1?",
+"gb": "Qian Yuanguan",
+"f1": 1.0
+},
+{
+"id": "2hop__68999_11125",
+"q": "When does the monsoon season occur in the city which is the fashion capital of India?",
+"q1": "Which city is the fashion capital of India?",
+"q2": "When does the monsoon season occur in #1?",
+"gb": "New Delhi",
+"f1": 0.0
+},
+{
+"id": "2hop__161414_44674",
+"q": "What was the name of the hurricane that hit the island and US territory that the creature can be found in?",
+"q1": "Which island and U.S. territory is the creature found in?",
+"q2": "What was the name of the hurricane that hit #1?",
+"gb": "Puerto Rico",
+"f1": 1.0
+},
+{
+"id": "2hop__388013_83940",
+"q": "When did the city where Palace of Buddies formed become the capitol of Utah?",
+"q1": "In which city did Palace of Buddies form?",
+"q2": "When did #1 become the capitol of Utah?",
+"gb": "Salt Lake City",
+"f1": 0.0
+},
+{
+"id": "2hop__10692_48770",
+"q": "Who built the largest ancient Inca empire in the region that Columbus discovered in 1492?",
+"q1": "In which region did Columbus discover in 1492?",
+"q2": "Who built the largest ancient Inca empire in #1?",
+"gb": "the Americas",
+"f1": 0.5
+},
+{
+"id": "2hop__144908_351187",
+"q": "Where is the city where Helen Hardin was born located?",
+"q1": "In which city was Helen Hardin born?",
+"q2": "Where is #1 located?",
+"gb": "Albuquerque",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__95494_55138",
+"q": "Who played Floyd the Barber in the show named for the actor featured in Onionhead?",
+"q1": "Who is the actor featured in Onionhead?",
+"q2": "Who played Floyd the Barber in the show named for #1?",
+"gb": "Andy Griffith",
+"f1": 1.0
+},
+{
+"id": "2hop__645827_51612",
+"q": "Who did the performer of The Time of Our Lives play in Hannah Montana?",
+"q1": "Who is the performer of The Time of Our Lives?",
+"q2": "Who did #1 play in Hannah Montana?",
+"gb": "Miley Cyrus",
+"f1": 1.0
+},
+{
+"id": "2hop__253914_90928",
+"q": "Who won American Idol when the singer of Love You I Do competed?",
+"q1": "Who is the singer of Love You I Do?",
+"q2": "Who won American Idol when #1 competed?",
+"gb": "Jennifer Hudson",
+"f1": 1.0
+},
+{
+"id": "2hop__697027_13665",
+"q": "What new powers did the employer of Melvin Purvis now have?",
+"q1": "Who is the employer of Melvin Purvis?",
+"q2": "What new powers did #1 now have?",
+"gb": "FBI",
+"f1": 0.0
+},
+{
+"id": "2hop__503331_37261",
+"q": "What is the mosaic in the church in the city where Bey Hamam is located known as?",
+"q1": "In which city is Bey Hamam located?",
+"q2": "What is the mosaic in the church in #1 known as?",
+"gb": "Thessaloniki",
+"f1": 1.0
+},
+{
+"id": "2hop__244421_40786",
+"q": "What is the highest court in the jurisdiction of Eurocrats?",
+"q1": "What is the jurisdiction of Eurocrats?",
+"q2": "What is the highest court in #1?",
+"gb": "European Union",
+"f1": 0.5
+},
+{
+"id": "2hop__13686_13703",
+"q": "What organization shares jurisdiction with the agency which is the domestic intelligence and security service for the US?",
+"q1": "What is the domestic intelligence and security service for the US?",
+"q2": "What organization shares jurisdiction with #1?",
+"gb": "FBI",
+"f1": 0.8571428571428571
+},
+{
+"id": "2hop__243339_774871",
+"q": "Where did the band form that made the live album Maiden Japan?",
+"q1": "Which band made the live album *Maiden Japan*?",
+"q2": "Where did #1 form?",
+"gb": "Iron Maiden",
+"f1": 0.5
+},
+{
+"id": "2hop__102882_21126",
+"q": "What is the rate of interreligious marriage in the country where Jonathan Arias was born?",
+"q1": "In which country was Jonathan Arias born?",
+"q2": "What is the rate of interreligious marriage in #1?",
+"gb": "Mexico",
+"f1": 0.4
+},
+{
+"id": "2hop__516071_126070",
+"q": "Who is in charge of the location where Jose Ardevol died?",
+"q1": "Where did Jose Ardevol die?",
+"q2": "Who is in charge of #1?",
+"gb": "Havana",
+"f1": 1.0
+},
+{
+"id": "2hop__160330_51682",
+"q": "When did the country, whose name in had to be replaced in a musical work, become part of the Soviet Union?",
+"q1": "Which country had to have its name replaced in a musical work?",
+"q2": "When did #1 become part of the Soviet Union?",
+"gb": "Latvia",
+"f1": 1.0
+},
+{
+"id": "2hop__635978_79175",
+"q": "When did the first large winter carnival take place in the city where Jean Pelletier died?",
+"q1": "In which city did Jean Pelletier die?",
+"q2": "When did the first large winter carnival take place in #1?",
+"gb": "Quebec City",
+"f1": 0.0
+},
+{
+"id": "2hop__129098_85808",
+"q": "Golfers arriving at Bluffton airport need not cross state lines to compete in the Akron tournament on which dates?",
+"q1": "Golfers arriving at Bluffton airport need not cross state lines to compete in the Akron tournament on which dates?",
+"q2": "Golfers arriving at Bluffton airport need not cross state lines to compete in the Akron tournament on which dates?",
+"gb": "Ohio",
+"f1": 0.8571428571428571
+},
+{
+"id": "2hop__128603_397470",
+"q": "What county is WNSC-FM located in?",
+"q1": "What county is WNSC-FM located in?",
+"q2": "What county is WNSC-FM located in?",
+"gb": "Rock Hill",
+"f1": 0.5
+},
+{
+"id": "2hop__171065_158398",
+"q": "Who is the programming language with the DELETE function partially named after?",
+"q1": "Who is the programming language with the DELETE function partially named after?",
+"q2": "Who is the programming language with the DELETE function partially named after?",
+"gb": "SQL",
+"f1": 0.0
+},
+{
+"id": "2hop__491356_93486",
+"q": "Who is the chief justice of the country containing the Bibiani/Anhwiaso/Bekwai District?",
+"q1": "Which country contains the Bibiani/Anhwiaso/Bekwai District?",
+"q2": "Who is the chief justice of #1?",
+"gb": "Ghana",
+"f1": 1.0
+},
+{
+"id": "2hop__350323_45731",
+"q": "What metropolitan part of Utah is the city where Don Fellows was born, a part of?",
+"q1": "In which city was Don Fellows born?",
+"q2": "What metropolitan part of Utah is #1 a part of?",
+"gb": "Salt Lake City",
+"f1": 1.0
+},
+{
+"id": "2hop__9232_34844",
+"q": "When did the people who some Marshall Island residents have recent ancestry from, give up trying to recapture Henderson Field?",
+"q1": "Which people do some Marshall Island residents have recent ancestry from?",
+"q2": "When did #1 give up trying to recapture Henderson Field?",
+"gb": "Japanese",
+"f1": 1.0
+},
+{
+"id": "2hop__275059_55607",
+"q": "When did Flatline by the singer of All Around the World come out?",
+"q1": "Who is the singer of All Around the World?",
+"q2": "When did Flatline by #1 come out?",
+"gb": "Justin Bieber",
+"f1": 1.0
+},
+{
+"id": "2hop__133022_449977",
+"q": "What company manufactures the 747 model for the company that makes Thomas-Morse MB-3?",
+"q1": "Which company makes the Thomas-Morse MB-3?",
+"q2": "What company manufactures the 747 model for #1?",
+"gb": "Boeing",
+"f1": 0.5
+},
+{
+"id": "2hop__416668_185893",
+"q": "Dour\u00e9, in Kamsi's country, is in which department?",
+"q1": "In which department is Dour\u00e9 located?",
+"q2": "Dour\u00e9 is in the department of #1.",
+"gb": "Burkina Faso",
+"f1": 0.0
+},
+{
+"id": "2hop__70712_57988",
+"q": "Who played Briscoe Darling on the show named for the actor who played the title role on the show Matlock?",
+"q1": "Who is the actor who played the title role on the show Matlock?",
+"q2": "Who played Briscoe Darling on the show named for #1?",
+"gb": "Andy Griffith",
+"f1": 1.0
+},
+{
+"id": "2hop__278619_126070",
+"q": "who was in charge of Gaspar Villate's birthplace?",
+"q1": "Where was Gaspar Villate born?",
+"q2": "Who was in charge of #1?",
+"gb": "Havana",
+"f1": 1.0
+},
+{
+"id": "2hop__145939_11444",
+"q": "What was the average family size in the city where Daniel William Coquillett died?",
+"q1": "In which city did Daniel William Coquillett die?",
+"q2": "What was the average family size in #1?",
+"gb": "Atlantic City",
+"f1": 0.0
+},
+{
+"id": "2hop__304747_36735",
+"q": "When did the headquarters location of Greatview fall?",
+"q1": "Where was the headquarters of Greatview located?",
+"q2": "When did #1 fall?",
+"gb": "Beijing",
+"f1": 0.0
+},
+{
+"id": "2hop__689229_36340",
+"q": "What is the most popular hotel in the city Adolph Jentsch died?",
+"q1": "In which city did Adolph Jentsch die?",
+"q2": "What is the most popular hotel in #1?",
+"gb": "Windhoek",
+"f1": 1.0
+},
+{
+"id": "2hop__94751_312978",
+"q": "Who is the sibling of the star of the film Lizzie McGuire?",
+"q1": "Who is the star of the film Lizzie McGuire?",
+"q2": "Who is the sibling of #1?",
+"gb": "Hilary Duff",
+"f1": 1.0
+},
+{
+"id": "2hop__711983_52794",
+"q": "Who was the minister of Chavundaraya's place of residence in 2018?",
+"q1": "Where was Chavundaraya's place of residence in 2018?",
+"q2": "Who was the minister of #1 in 2018?",
+"gb": "Karnataka",
+"f1": 1.0
+},
+{
+"id": "2hop__70712_85856",
+"q": "Where was the opening scene of the TV show that featured Ben Matlock filmed?",
+"q1": "Which TV show featured Ben Matlock?",
+"q2": "Where was the opening scene of #1 filmed?",
+"gb": "Andy Griffith",
+"f1": 0.0
+},
+{
+"id": "2hop__37639_66214",
+"q": "Where is Shelby High School located in the state whose motto is a passage from the Bible?",
+"q1": "What is the motto of the state that includes a Bible passage as its official motto?",
+"q2": "Where is Shelby High School located in #1?",
+"gb": "Ohio",
+"f1": 0.4
+},
+{
+"id": "2hop__617288_579740",
+"q": "What town is found in the same county as Lorraine?",
+"q1": "What county contains Lorraine?",
+"q2": "Which town is found in the same county as #1?",
+"gb": "Butte County",
+"f1": 0.0
+},
+{
+"id": "2hop__128892_85871",
+"q": "Who won the mayoral election in the city in which WPGG is licensed?",
+"q1": "In which city is WPGG licensed?",
+"q2": "Who won the mayoral election in #1?",
+"gb": "Atlantic City",
+"f1": 1.0
+},
+{
+"id": "2hop__44814_4697",
+"q": "What was the final thing shown on the creator of Till Death Do Us Part before it was shut down for the war?",
+"q1": "Who created *Till Death Do Us Part*?",
+"q2": "What was the final thing shown on #1 before it was shut down for the war?",
+"gb": "BBC",
+"f1": 0.0
+},
+{
+"id": "2hop__52817_29454",
+"q": "When did Japan finish invading the country where the last name shin came from?",
+"q1": "Where did the last name \"shin\" originate?",
+"q2": "When did Japan finish invading #1?",
+"gb": "Korea",
+"f1": 0.0
+},
+{
+"id": "2hop__289749_781580",
+"q": "The language of work or name of Massis is a type of what?",
+"q1": "What is Massis known for in terms of language?",
+"q2": "What type of language is the language of work or name of #1?",
+"gb": "Armenian",
+"f1": 0.0
+},
+{
+"id": "2hop__6391_6402",
+"q": "The seventh mission, of the series of missions that Project Gemini helped recruit experienced people for, launched from Earth on what date?",
+"q1": "What was the name of the seventh mission in the series of missions that Project Gemini helped recruit experienced people for?",
+"q2": "When did #1 launch from Earth?",
+"gb": "Apollo",
+"f1": 0.0
+},
+{
+"id": "2hop__216500_10366",
+"q": "In which year did the country that encompassed Beyra become independent?",
+"q1": "Which country encompassed Beyra?",
+"q2": "In which year did #1 become independent?",
+"gb": "Somalia",
+"f1": 1.0
+},
+{
+"id": "2hop__851859_92444",
+"q": "Who sings the rap in Baby, by the performer of Turn to You?",
+"q1": "Who is the performer of \"Turn to You\"?",
+"q2": "Who sings the rap in \"Baby\" by #1?",
+"gb": "Justin Bieber",
+"f1": 1.0
+},
+{
+"id": "2hop__770643_829081",
+"q": "What county is William Samuel Verplanck Junior's place of death the seat of?",
+"q1": "Where was William Samuel Verplanck Junior died?",
+"q2": "What county is #1 the seat of?",
+"gb": "Knoxville",
+"f1": 1.0
+},
+{
+"id": "2hop__358581_18221",
+"q": "When was the spring training home of Rich Thompson's team built?",
+"q1": "Which team did Rich Thompson play for during spring training?",
+"q2": "When was the spring training home of #1 built?",
+"gb": "Oakland Athletics",
+"f1": 0.0
+},
+{
+"id": "2hop__104438_71774",
+"q": "What is the age limit for nysc in the country Anthony Ukpo was from?",
+"q1": "Which country was Anthony Ukpo from?",
+"q2": "What is the age limit for NYSC in #1?",
+"gb": "Nigeria",
+"f1": 1.0
+},
+{
+"id": "2hop__141183_256194",
+"q": "Who owns the 100+ Station Group that shares its name with the network that plays Blue Collar TV?",
+"q1": "Which network plays Blue Collar TV?",
+"q2": "Who owns the 100+ Station Group that shares its name with #1?",
+"gb": "The WB",
+"f1": 0.5
+},
+{
+"id": "2hop__497258_127916",
+"q": "What league was Shalon Baker's team in?",
+"q1": "Which team did Shalon Baker play for?",
+"q2": "What league was #1 in?",
+"gb": "Edmonton Eskimos",
+"f1": 1.0
+},
+{
+"id": "2hop__347685_22796",
+"q": "How many troops did the Turks send to the birthplace of Sergei Martynov during the Crimean War?",
+"q1": "Where was Sergei Martynov born?",
+"q2": "How many troops did the Turks send to #1 during the Crimean War?",
+"gb": "Gyumri",
+"f1": 1.0
+},
+{
+"id": "2hop__159460_81260",
+"q": "When did the U.S. and the country where Winchester is located become allies?",
+"q1": "In which country is Winchester located?",
+"q2": "When did the U.S. and #1 become allies?",
+"gb": "England",
+"f1": 0.0
+},
+{
+"id": "2hop__15733_89478",
+"q": "Who was the king in 1936 of the country where Freemasonry first spread?",
+"q1": "Which country was the first to spread Freemasonry in?",
+"q2": "Who was the king of #1 in 1936?",
+"gb": "England",
+"f1": 0.0
+},
+{
+"id": "2hop__4536_646717",
+"q": "Who is the nephew of the seventh President of the United States?",
+"q1": "Who is the seventh President of the United States?",
+"q2": "Who is the nephew of #1?",
+"gb": "Andrew Jackson",
+"f1": 1.0
+},
+{
+"id": "2hop__490764_72962",
+"q": "How many times did Danny Philliskirk's team win the Premier League?",
+"q1": "How many times did Danny Philliskirk's team win the Premier League?",
+"q2": "How many times did Danny Philliskirk's team win the Premier League?",
+"gb": "Chelsea",
+"f1": 0.0
+},
+{
+"id": "2hop__29384_79793",
+"q": "When did cable cars start in the city where the signing of the ANZUS treaty was held in 1951?",
+"q1": "In which city was the ANZUS treaty signed in 1951?",
+"q2": "When did cable cars start in #1?",
+"gb": "San Francisco",
+"f1": 1.0
+},
+{
+"id": "2hop__564180_91206",
+"q": "What is the pyramid building in the city where Bevan Dufty lives?",
+"q1": "In which city does Bevan Dufty live?",
+"q2": "What is the pyramid building in #1?",
+"gb": "San Francisco",
+"f1": 1.0
+},
+{
+"id": "2hop__638478_377891",
+"q": "What agency consists of the Science Museum in Alberto Lista's birth place?",
+"q1": "Where was Alberto Lista born?",
+"q2": "What agency consists of the Science Museum in #1?",
+"gb": "Seville",
+"f1": 0.0
+},
+{
+"id": "2hop__443480_160917",
+"q": "How many sunny days a year are there in the city where LMGPR is headquartered?",
+"q1": "In which city is LMGPR headquartered?",
+"q2": "How many sunny days a year are there in #1?",
+"gb": "San Jose",
+"f1": 1.0
+},
+{
+"id": "2hop__598535_421645",
+"q": "Who was married to the artist behind Look to Your Heart?",
+"q1": "Who is the artist behind Look to Your Heart?",
+"q2": "Who was married to #1?",
+"gb": "Frank Sinatra",
+"f1": 0.0
+},
+{
+"id": "2hop__605174_43463",
+"q": "Who plays the spouse of Catherine Dickens in The Man Who Invented Christmas?",
+"q1": "Who is the spouse of Catherine Dickens in *The Man Who Invented Christmas*?",
+"q2": "Who plays #1?",
+"gb": "Charles Dickens",
+"f1": 1.0
+},
+{
+"id": "2hop__319328_541630",
+"q": "In what municipality is Sheet Harbor found, in the province where Lake Ainslie is located?",
+"q1": "In which province is Lake Ainslie located?",
+"q2": "In what municipality is Sheet Harbor found, in the province where #1 is located?",
+"gb": "Nova Scotia",
+"f1": 1.0
+},
+{
+"id": "2hop__368052_583532",
+"q": "In what state is the county that the Dodge Center is found in?",
+"q1": "In which county is Dodge Center located?",
+"q2": "In what state is #1?",
+"gb": "Dodge County",
+"f1": 0.0
+},
+{
+"id": "2hop__263082_88957",
+"q": "Who won season 5 of the Bigg Boss in the film Attahasa language's region?",
+"q1": "Who won season 5 of the Bigg Boss in the film Attahasa language's region?",
+"q2": "Who won season 5 of the Bigg Boss in the film Attahasa language's region?",
+"gb": "Kannada",
+"f1": 1.0
+},
+{
+"id": "2hop__91322_83200",
+"q": "When did the team that lost the 2005 Champions League final last win Serie A?",
+"q1": "Which team lost the 2005 Champions League final?",
+"q2": "When did #1 last win Serie A?",
+"gb": "Milan",
+"f1": 0.0
+},
+{
+"id": "2hop__75746_321254",
+"q": "Who is the child of the musician who wrote the lyrics to The Sound of Silence?",
+"q1": "Who is the musician who wrote the lyrics to *The Sound of Silence*?",
+"q2": "Who is the child of #1?",
+"gb": "Paul Simon",
+"f1": 0.5
+},
+{
+"id": "2hop__396830_74309",
+"q": "Who is current prime minister of the country where Haddersfield is located?",
+"q1": "In which country is Haddersfield located?",
+"q2": "Who is the current prime minister of #1?",
+"gb": "Jamaica",
+"f1": 1.0
+},
+{
+"id": "2hop__128892_11444",
+"q": "What is the average family size in the city in which WPGG is licensed?",
+"q1": "In which city is WPGG licensed?",
+"q2": "What is the average family size in #1?",
+"gb": "Atlantic City",
+"f1": 0.0
+},
+{
+"id": "2hop__357497_82538",
+"q": "Where is the Rio Grande river located in the country where Norbrook is located?",
+"q1": "In which country is Norbrook located?",
+"q2": "Where is the Rio Grande river located in #1?",
+"gb": "Jamaica",
+"f1": 0.5
+},
+{
+"id": "2hop__559241_32631",
+"q": "What did Goring believe the U-109 operator would gain with further support?",
+"q1": "Who believed the U-109 operator would gain something with further support?",
+"q2": "What did #1 believe the U-109 operator would gain with further support?",
+"gb": "Kriegsmarine",
+"f1": 1.0
+},
+{
+"id": "2hop__150026_533616",
+"q": "Who is a cast member from the show with a character named Jan Brandner?",
+"q1": "Who plays Jan Brandner in a television show?",
+"q2": "Who is a cast member from #1?",
+"gb": "Verbotene Liebe",
+"f1": 0.0
+},
+{
+"id": "2hop__107338_57695",
+"q": "When was the last time the olympics were held in the country Salangeul Chajaseo was from?",
+"q1": "Which country was Salangeul Chajaseo from?",
+"q2": "When was the last time the Olympics were held in #1?",
+"gb": "Korea",
+"f1": 0.0
+},
+{
+"id": "2hop__310956_60600",
+"q": "What was the release date of the iphone 6, made by the company that employed Bill Kincaid?",
+"q1": "Which company employed Bill Kincaid?",
+"q2": "What was the release date of the iPhone 6, made by #1?",
+"gb": "Apple",
+"f1": 1.0
+},
+{
+"id": "2hop__582457_2702",
+"q": "Kanye is credited for the shift away from what specific genre of Height's genre?",
+"q1": "What is the specific genre that Height's music originally belonged to?",
+"q2": "Kanye is credited for the shift away from #1.",
+"gb": "rap",
+"f1": 0.0
+},
+{
+"id": "2hop__14959_53204",
+"q": "When did the ocean surrounding Antarctica become a thing?",
+"q1": "Which ocean surrounds Antarctica?",
+"q2": "When did #1 become a thing?",
+"gb": "Southern Ocean",
+"f1": 0.0
+},
+{
+"id": "2hop__107249_71652",
+"q": "What coalition won the 2018 general election in the country which produced the show I Wanna Be A Model?",
+"q1": "Which country produced the show I Wanna Be A Model?",
+"q2": "What coalition won the 2018 general election in #1?",
+"gb": "Malaysia",
+"f1": 1.0
+},
+{
+"id": "2hop__153369_86916",
+"q": "Who played the piano in the series that had an episode called A Measure of Salvation?",
+"q1": "Which series had an episode called *A Measure of Salvation*?",
+"q2": "Who played the piano in #1?",
+"gb": "Battlestar Galactica",
+"f1": 1.0
+},
+{
+"id": "2hop__142279_287578",
+"q": "Where was the artist who created In Praise of Dreams born?",
+"q1": "Who is the artist who created *In Praise of Dreams*?",
+"q2": "Where was #1 born?",
+"gb": "Jan Garbarek",
+"f1": 1.0
+},
+{
+"id": "2hop__1265_70787",
+"q": "In 2017, the Puebla Earthquake hit what part of the country where the pre-title scene in Spectre was filmed?",
+"q1": "In which part of the country was the pre-title scene in *Spectre* filmed?",
+"q2": "In 2017, the Puebla Earthquake hit what part of the country where #1 was filmed?",
+"gb": "Mexico",
+"f1": 1.0
+},
+{
+"id": "2hop__855233_88978",
+"q": "What's the current population of James Matheson's birth city?",
+"q1": "In which city was James Matheson born?",
+"q2": "What is the current population of #1?",
+"gb": "Des Moines",
+"f1": 1.0
+},
+{
+"id": "2hop__162843_43495",
+"q": "Who is minister of defence in the country where Lealui is located?",
+"q1": "In which country is Lealui located?",
+"q2": "Who is the minister of defence in #1?",
+"gb": "Zambia",
+"f1": 1.0
+},
+{
+"id": "2hop__860451_542971",
+"q": "Who is the performer of the Fantasy Land Tour 2004, recorded in the birthplace of Barney Cheng?",
+"q1": "Who is the performer of the Fantasy Land Tour 2004, recorded in the birthplace of Barney Cheng?",
+"q2": "Who is the performer of the Fantasy Land Tour 2004, recorded in the birthplace of Barney Cheng?",
+"gb": "Taipei",
+"f1": 1.0
+},
+{
+"id": "2hop__559127_539716",
+"q": "What county is Hebron in the same province that Malpeque Bay is located a part of?",
+"q1": "In which province is Malpeque Bay located?",
+"q2": "What county is Hebron in the same province that #1 is located in?",
+"gb": "Prince Edward Island",
+"f1": 1.0
+},
+{
+"id": "2hop__146459_430",
+"q": "When did Chopin's family relocate to the town of Jan Bialostocki's demise?",
+"q1": "In which town did Chopin's family relocate?",
+"q2": "When did #1 experience the demise of Jan Bialostocki?",
+"gb": "Warsaw",
+"f1": 0.0
+},
+{
+"id": "2hop__588131_90697",
+"q": "Who is the current minister of health in the country where Nyamuliro mine is located?",
+"q1": "In which country is the Nyamuliro mine located?",
+"q2": "Who is the current minister of health in #1?",
+"gb": "Uganda",
+"f1": 1.0
+},
+{
+"id": "2hop__156863_633817",
+"q": "AFSCME Local 77 at Kieran Healy's place of employment is an instance of what?",
+"q1": "What is the name of Kieran Healy's place of employment?",
+"q2": "AFSCME Local 77 at #1 is an instance of what?",
+"gb": "Duke University",
+"f1": 0.5714285714285715
+},
+{
+"id": "2hop__129270_541630",
+"q": "Where is Sheet Harbour in the state having Great Village?",
+"q1": "In which state is Great Village located?",
+"q2": "Where is Sheet Harbour in #1?",
+"gb": "Nova Scotia",
+"f1": 0.0
+},
+{
+"id": "2hop__708221_467995",
+"q": "What is the record label of the artist who wrote the lyrics to I Hate Boys?",
+"q1": "Who wrote the lyrics to \"I Hate Boys\"?",
+"q2": "What is the record label of #1?",
+"gb": "Christina Aguilera",
+"f1": 1.0
+},
+{
+"id": "2hop__280665_43057",
+"q": "When did the state where Miguel Garcia was born become part of US?",
+"q1": "In which state was Miguel Garcia born?",
+"q2": "When did #1 become part of the US?",
+"gb": "New Mexico",
+"f1": 1.0
+},
+{
+"id": "2hop__136380_91469",
+"q": "The modern setting of Blind Detective was ruled by the British Empire starting when?",
+"q1": "What is the setting of Blind Detective?",
+"q2": "The modern setting of Blind Detective was ruled by the British Empire starting when #1?",
+"gb": "Hong Kong",
+"f1": 1.0
+},
+{
+"id": "2hop__203202_433799",
+"q": "Who is the composer of the piece of which Atys is an instance, named after a beggar?",
+"q1": "Who composed the piece named after a beggar?",
+"q2": "Who is the composer of #1?",
+"gb": "opera",
+"f1": 1.0
+},
+{
+"id": "2hop__130964_791121",
+"q": "Where is the Golden Boy located in the province the Rural Municipality of Ethelbert is located?",
+"q1": "In which province is the Rural Municipality of Ethelbert located?",
+"q2": "Where is the Golden Boy located in #1?",
+"gb": "Manitoba",
+"f1": 1.0
+},
+{
+"id": "2hop__544987_737459",
+"q": "Who is the father of the singer-songwriter who had a compilation album called Acoustic?",
+"q1": "Who is the singer-songwriter who had a compilation album called Acoustic?",
+"q2": "Who is the father of #1?",
+"gb": "John Lennon",
+"f1": 0.5
+},
+{
+"id": "2hop__822499_62671",
+"q": "What is the name of the North Carolina airport in the city where John J. Milligan resided?",
+"q1": "In which city did John J. Milligan reside?",
+"q2": "What is the name of the North Carolina airport in #1?",
+"gb": "Wilmington",
+"f1": 1.0
+},
+{
+"id": "2hop__741137_99808",
+"q": "On which continent can the country where Queen Salote College is located be found?",
+"q1": "In which country is Queen Salote College located?",
+"q2": "On which continent can #1 be found?",
+"gb": "Tonga",
+"f1": 1.0
+},
+{
+"id": "2hop__419783_86840",
+"q": "Who founded the institution that Domenico Crivelli is employed by?",
+"q1": "Which institution is Domenico Crivelli employed by?",
+"q2": "Who founded #1?",
+"gb": "Royal Academy of Music",
+"f1": 0.0
+},
+{
+"id": "2hop__860455_2630",
+"q": "How is the human rights record of the country containing Alakol District when compared to the rest of the world?",
+"q1": "Which country contains Alakol District?",
+"q2": "How is the human rights record of #1 when compared to the rest of the world?",
+"gb": "Kazakhstan",
+"f1": 1.0
+},
+{
+"id": "2hop__292911_99606",
+"q": "In what geographic region is the country where Teafuone is located?",
+"q1": "In which country is Teafuone located?",
+"q2": "In what geographic region is the country where #1 is located?",
+"gb": "Tuvalu",
+"f1": 1.0
+},
+{
+"id": "2hop__851244_52135",
+"q": "How many districts are there in the location of the 2013 Indian Open?",
+"q1": "In which location was the 2013 Indian Open held?",
+"q2": "How many districts are there in #1?",
+"gb": "New Delhi",
+"f1": 1.0
+},
+{
+"id": "2hop__297202_14970",
+"q": "What is the size of the continent Marian Cove is located in square miles?",
+"q1": "In which continent is Marian Cove located?",
+"q2": "What is the size of #1 in square miles?",
+"gb": "Antarctica",
+"f1": 1.0
+},
+{
+"id": "2hop__81839_93263",
+"q": "When did the most followed person on Instagram join Manchester United?",
+"q1": "Who is the most followed person on Instagram?",
+"q2": "When did #1 join Manchester United?",
+"gb": "Cristiano Ronaldo",
+"f1": 0.0
+},
+{
+"id": "2hop__325983_20497",
+"q": "when did England colonize the country where Freetown is located?",
+"q1": "In which country is Freetown located?",
+"q2": "When did England colonize #1?",
+"gb": "Bahamas",
+"f1": 0.0
+},
+{
+"id": "2hop__782306_3089",
+"q": "What month did Einstein's performer win?",
+"q1": "Who is the performer of \"Einstein's\" song?",
+"q2": "In which month did #1 win?",
+"gb": "Kelly Clarkson",
+"f1": 0.0
+},
+{
+"id": "2hop__62400_55257",
+"q": "Who did the team that played the White Sox in the 2005 World Series, play in the 2017 World Series?",
+"q1": "Which team played the White Sox in the 2005 World Series?",
+"q2": "Who did #1 play in the 2017 World Series?",
+"gb": "Houston Astros",
+"f1": 1.0
+},
+{
+"id": "2hop__75274_727337",
+"q": "What is the headquarters of the organization whose name is the full form of ISO?",
+"q1": "What is the full form of ISO?",
+"q2": "What is the headquarters of the organization whose name is #1?",
+"gb": "International Organization for Standardization",
+"f1": 1.0
+},
+{
+"id": "2hop__355591_62776",
+"q": "When did the performer of Stronger release her first album?",
+"q1": "Who is the performer of Stronger?",
+"q2": "When did #1 release her first album?",
+"gb": "Britney Spears",
+"f1": 0.0
+},
+{
+"id": "2hop__81497_91983",
+"q": "When do we vote for governor in the state the Green Bay Packers are from?",
+"q1": "In which state are the Green Bay Packers from?",
+"q2": "When do we vote for governor in #1?",
+"gb": "Wisconsin",
+"f1": 1.0
+},
+{
+"id": "2hop__510106_58057",
+"q": "What is the average income in Strawberry Manor's county?",
+"q1": "Which county contains Strawberry Manor?",
+"q2": "What is the average income in #1?",
+"gb": "Marin County",
+"f1": 1.0
+},
+{
+"id": "2hop__683278_29363",
+"q": "Who was targeted for defrauding the electoral process, in the state where Pete King was born?",
+"q1": "In which state was Pete King born?",
+"q2": "Who was targeted for defrauding the electoral process in #1?",
+"gb": "Ohio",
+"f1": 0.0
+},
+{
+"id": "2hop__139924_4681",
+"q": "When did Baird cease showing its programs on the network which broadcasted Elizabeth R?",
+"q1": "Which network broadcasted Elizabeth R?",
+"q2": "When did Baird cease showing its programs on #1?",
+"gb": "BBC",
+"f1": 0.0
+},
+{
+"id": "2hop__661661_759679",
+"q": "What college did Seemabaddha's composer attend?",
+"q1": "Who is the composer of Seemabaddha?",
+"q2": "What college did #1 attend?",
+"gb": "Satyajit Ray",
+"f1": 0.0
+},
+{
+"id": "2hop__118282_722449",
+"q": "What language is used by the director of Tiffany Memorandum?",
+"q1": "Who is the director of Tiffany Memorandum?",
+"q2": "What language is used by #1?",
+"gb": "Sergio Grieco",
+"f1": 0.0
+},
+{
+"id": "2hop__97093_42092",
+"q": "What did the war that where the Desert Patrol Vehicle first fought inadvertently do in the early 1990s?",
+"q1": "In which war did the Desert Patrol Vehicle first fight?",
+"q2": "What did #1 inadvertently do in the early 1990s?",
+"gb": "Gulf War",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__557882_333904",
+"q": "Who is the sibling of Harrison and Barrison's producer?",
+"q1": "Who is the producer of Harrison and Barrison?",
+"q2": "Who is the sibling of #1?",
+"gb": "Alexander Korda",
+"f1": 1.0
+},
+{
+"id": "2hop__89467_569932",
+"q": "What was the record label of the original singer of Don't Let Me Be Misunderstood?",
+"q1": "Who was the original singer of \"Don't Let Me Be Misunderstood\"?",
+"q2": "What was #1's record label?",
+"gb": "Nina Simone",
+"f1": 1.0
+},
+{
+"id": "2hop__400945_57673",
+"q": "How many number 1 hits did the performers of Dance the Night Away have?",
+"q1": "Who are the performers of Dance the Night Away?",
+"q2": "How many number 1 hits did #1 have?",
+"gb": "Van Halen",
+"f1": 1.0
+},
+{
+"id": "2hop__829561_68172",
+"q": "When did the sport of Jurg Wenger become an Olympic sport?",
+"q1": "When did the sport of Jurg Wenger become an Olympic sport?",
+"q2": "When did the sport of Jurg Wenger become an Olympic sport?",
+"gb": "skeleton",
+"f1": 0.0
+},
+{
+"id": "2hop__828334_75671",
+"q": "Who wrote the pledge of allegiance of the country where Bahamas Association of Athletic Associations is located?",
+"q1": "In which country is the Bahamas Association of Athletic Associations located?",
+"q2": "Who wrote the pledge of allegiance of #1?",
+"gb": "The Bahamas",
+"f1": 1.0
+},
+{
+"id": "2hop__661591_13728",
+"q": "How did David Rossi's employer respond to requests to release information beyond the initial press release?",
+"q1": "Who is David Rossi's employer?",
+"q2": "How did #1 respond to requests to release information beyond the initial press release?",
+"gb": "FBI",
+"f1": 0.6666666666666666
+},
+{
+"id": "2hop__132953_842239",
+"q": "The 7, made by the company that also built the AMR 35, is part of which series?",
+"q1": "Which company built the AMR 35?",
+"q2": "The 7, made by #1, is part of which series?",
+"gb": "Renault",
+"f1": 0.0
+},
+{
+"id": "2hop__758794_701819",
+"q": "Which city in the province where Tokyo Rose was founded borders Riviere-Verte?",
+"q1": "In which province was Tokyo Rose founded?",
+"q2": "Which city in #1 borders Riviere-Verte?",
+"gb": "New Brunswick",
+"f1": 0.0
+},
+{
+"id": "2hop__798741_20661",
+"q": "When did Britain withdraw from the country where Barbar is located?",
+"q1": "In which country is Barbar located?",
+"q2": "When did Britain withdraw from #1?",
+"gb": "Bahrain",
+"f1": 1.0
+},
+{
+"id": "2hop__176671_158398",
+"q": "Who is the programming language that has the WHERE clause partially named after?",
+"q1": "Which programming language has the WHERE clause partially named after?",
+"q2": "Who is the person after whom the WHERE clause in #1 is partially named?",
+"gb": "SQL",
+"f1": 0.0
+},
+{
+"id": "2hop__73959_16861",
+"q": "What year did the king who is referred to so often in part three of the declaration die?",
+"q1": "Which king is referred to so often in part three of the declaration?",
+"q2": "In what year did #1 die?",
+"gb": "King George III",
+"f1": 1.0
+},
+{
+"id": "2hop__512225_83687",
+"q": "What is the population of the California city where Joe A. Campos was born?",
+"q1": "In which California city was Joe A. Campos born?",
+"q2": "What is the population of #1?",
+"gb": "Santa Rosa",
+"f1": 1.0
+},
+{
+"id": "2hop__636386_49333",
+"q": "When did the currencies of the country Ibo is located first come into circulation?",
+"q1": "In which country is Ibo located?",
+"q2": "When did the currencies of #1 first come into circulation?",
+"gb": "Mozambique",
+"f1": 1.0
+},
+{
+"id": "2hop__102199_59072",
+"q": "What cigars are named after the island capital of the country of origin for Nino Rivera?",
+"q1": "What is the country of origin for Nino Rivera?",
+"q2": "What cigars are named after the island capital of #1?",
+"gb": "Cuba",
+"f1": 1.0
+},
+{
+"id": "2hop__143912_392890",
+"q": "What record label does the performer of Sam's Place sign?",
+"q1": "Who is the performer of Sam's Place?",
+"q2": "What record label does #1 sign?",
+"gb": "Buck Owens",
+"f1": 1.0
+},
+{
+"id": "2hop__140675_140916",
+"q": "On what network can you find the Tonight show that bears the name of the channel that broadcast Market Wrap?",
+"q1": "On which network does Market Wrap broadcast?",
+"q2": "On what network can you find the Tonight Show that bears the name of #1?",
+"gb": "CNBC",
+"f1": 0.6666666666666666
+}
+]

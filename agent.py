@@ -100,13 +100,12 @@ def is_unknown(ans: str) -> bool:
 
 
 def clean_answer(text: str) -> str:
-    """Keep only the answer: drop "Answer:", quotes, passage numbers and a trailing acronym."""
+    """Keep only the answer: drop "Answer:", quotes and passage numbers."""
     line = text.strip().split("\n")[0].strip()
     line = re.sub(r"^(final answer|answer)\s*[:\-]\s*", "", line, flags=re.I)
     line = re.sub(r"^the answer is\s+", "", line, flags=re.I)
     line = re.sub(r"\s*\[\d+\]\s*", " ", line)             # "[3]"
     line = re.sub(r"\s*\((passage|see)[^)]*\)", "", line, flags=re.I)
-    line = re.sub(r"\s*\([A-Z][A-Z.&]{1,9}\)$", "", line)  # "Example Standards Bureau (ESB)"
     return line.strip(" .\"'*`").strip()
 
 
@@ -394,16 +393,12 @@ reply unknown.
 Answer:"""
 
 
-# The model knows newer facts than the dataset, so do not ask its memory about things that change.
-TIME_SENSITIVE = re.compile(r"\b(last|latest|most recent|current|currently|now|today|recent)\b", re.I)
-
-
 def memory_check(question: str, notes: Notes, tools, context: str, asked: str, judge_q: str, ans: str, cited):
     """Ask the model to answer from memory, without passages. If its answer is different and a
     passage contains it, the judge picks one (in hop 2 a spare search may look for that passage).
     Our answer is A and wins on any doubt."""
     left = tools.budget_left()
-    if left["llm_calls"] < 2 or left["seconds"] < 20 or TIME_SENSITIVE.search(question):
+    if left["llm_calls"] < 2 or left["seconds"] < 20:
         return ans, cited
     try:
         out = tools.llm(CLOSED_PROMPT.format(q=asked), max_tokens=24)
@@ -480,13 +475,7 @@ def second_opinion(question: str, notes: Notes, tools, context: str, shown: list
         if is_unknown(other) or norm(other) == norm(ans) or norm(other) == norm(notes.answers[0]) \
                 or not fits_type(question, other):
             return ans, cited
-        # Not a real disagreement if the second answer only adds words to the first (short
-        # answers are preferred), unless the added words are date parts ("1902" -> "June 1902").
-        words, more = set(norm(ans).split()), set(norm(other).split())
-        if words < more and not all(re.fullmatch(r"\d+|" + MONTHS, w) for w in more - words):
-            return ans, cited
-        # Also not a real disagreement if the second answer is a piece of the first ("12th" -> "12").
-        if norm(other) in norm(ans):
+        if norm(other) in norm(ans) or norm(ans) in norm(other):  # the two reads agree
             return ans, cited
         num = re.search(r"Passage\s*:\s*\[?(\d+)", out)
         cited2 = rev[int(num.group(1)) - 1] if num and 1 <= int(num.group(1)) <= len(rev) else None
@@ -667,8 +656,7 @@ def answer(question: str, notes: Notes, tools) -> dict:
 
     If hop 2 has no answer, one more LLM call asks for a best guess (from memory if we know the
     bridge, else from the passages). Fallbacks, in order: a rejected hop-2 answer of the right
-    type, the reply itself, the bridge, and a span from the best passage. Then the answer is
-    put into a short, standard form."""
+    type, the reply itself, the bridge, and a span from the best passage."""
     final = notes.answers[1]
     if not final:
         hint = f"Hint: {notes.subqs[0]} {notes.answers[0]}" if notes.answers[0] else ""
@@ -692,13 +680,7 @@ def answer(question: str, notes: Notes, tools) -> dict:
         final = (notes.rejected or [sentence or notes.answers[0]])[-1]
     if not usable(final) or re.match(r"(not available|not known|no one|nobody)\b", norm(final)):
         final = extract_guess(question, notes) or final  # an empty answer always scores 0
-    if re.search(r"\b(what|which)\s+(other\s+)?county\b", question, re.I) and final \
-            and not re.search(r"\b(county|parish|borough|shire)\b", final, re.I):
-        final_text = f"{final} County"  # the question asks for a county: name it as one
-    else:
-        final_text = final
-    answer_text = final_form(drop_unit(question, expand_acronym(final_text, notes)))
-    return {"answer": answer_text, "citations": citations(question, final, notes)}
+    return {"answer": final.replace("*", "").strip(), "citations": citations(question, final, notes)}
 
 
 def extract_guess(question: str, notes: Notes) -> str:
@@ -724,45 +706,15 @@ def extract_guess(question: str, notes: Notes) -> str:
     return ""
 
 
-def expand_acronym(ans: str, notes: Notes) -> str:
-    """Spell out a bare acronym ("NFL" -> "National Football League") when a passage writes
-    "Full Name (NFL)" and the initials match. A full name is clearer than initials."""
-    if not re.fullmatch(r"[A-Z]{2,6}", ans):
-        return ans
-    for p in notes.passages.values():
-        for m in re.finditer(r"((?:[A-Z][\w'&-]*\s+(?:of\s+|and\s+|for\s+|the\s+)?){1,7})\(" + ans + r"\)", p.text):
-            words = m.group(1).split()
-            while words:  # drop leading words that are not part of the name
-                if "".join(w[0] for w in words if w[0].isupper()) == ans:
-                    return " ".join(words)
-                words = words[1:]
-    return ans
-
-
-def drop_unit(question: str, ans: str) -> str:
-    """For "how many X" questions keep only the number ("three goals" -> "three"), if the question
-    uses that unit. Also "twelve (12)" -> "twelve"."""
-    ans = re.sub(r"^(\S+)\s*\(\d[\d,.]*\)$", r"\1", ans.strip())
-    if not re.match(r"how many\b", question.strip(), re.I):
-        return ans
-    m = re.match(r"^(\d[\d,.]*|(?:" + NUMBER_WORDS + r")(?:[- ](?:" + NUMBER_WORDS + r"))*)\s+(.+)$", ans, re.I)
-    stem = lambda text: {w.rstrip("s") for w in norm(text).split()}  # "goal" matches "goals"
-    if m and stem(m.group(2)) <= stem(question) | {"time"}:
-        return m.group(1)
-    return ans
-
-
 MONTHS = "january|february|march|april|may|june|july|august|september|october|november|december"
 NUMBER_WORDS = (r"one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\w+teen|twenty|thirty|forty|"
                 "fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|dozen|once|twice|single")
 
 
 def fits_type(question: str, ans: str) -> bool:
-    """False if the answer has the wrong type: no county for a county question, no date for a
-    "when" question, or no number for a "how many/much/long" question."""
+    """False if the answer has the wrong type: no date for a "when" question, or no number for a
+    "how many/much/long" question."""
     q, a = question.lower().strip(), ans.lower()
-    if re.search(r"\b(what|which)\s+(other\s+)?county\b|\bbirth county\b", q):
-        return bool(re.search(r"\b(county|parish|borough|shire)\b", a))
     if re.match(r"(when|what year|which year|in what year|in which year|what date)\b", q):
         return bool(re.search(r"\d|\b(" + MONTHS + r"|century|centuries|decade|era|age|war|period|dynasty|"
                               r"spring|summer|autumn|fall|winter|season)\b", a))
@@ -770,20 +722,6 @@ def fits_type(question: str, ans: str) -> bool:
         units = r"|year|years|month|months|week|weeks|day|days|hour|hours"
         return bool(re.search(r"\d|\b(" + NUMBER_WORDS + units + r")\b", a))
     return True
-
-
-def final_form(ans: str) -> str:
-    """Format the answer for the scorer, which deletes punctuation: put spaces around hyphens
-    so "1987-06-30" stays three words. Also drop a trailing region or a hedge word before a number."""
-    ans = ans.replace("*", "").strip()
-    # "Riverton, West Yorkshire" -> "Riverton". Keep dates, numbers, lists and "Washington, D.C.".
-    head, sep, tail = ans.partition(", ")
-    if sep and re.match(r"[A-Za-z]", tail) and "." not in tail and not re.search(r"\b(and|or)\b|&", ans):
-        ans = head
-    ans = re.sub(r"\s*[-\u2013\u2014]+\s*", " - ", ans)
-    # "about 300" -> "300"
-    return re.sub(r"^(over|about|approximately|around|nearly|almost|more than|less than)\s+(?=\d)", "", ans,
-                  flags=re.I)
 
 
 def usable(ans: str) -> bool:

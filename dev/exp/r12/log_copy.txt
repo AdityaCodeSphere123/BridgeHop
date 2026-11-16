@@ -1,0 +1,43 @@
+Loading corpus and BM25 index ...
+Running dev/exp/r12/agent_nogold_copy.py on 300 questions with 8 workers ...
+  10/300 questions  (1s)
+  20/300 questions  (1s)
+  30/300 questions  (1s)
+  40/300 questions  (1s)
+  50/300 questions  (2s)
+  60/300 questions  (2s)
+  70/300 questions  (3s)
+  80/300 questions  (3s)
+  90/300 questions  (4s)
+  100/300 questions  (5s)
+  110/300 questions  (6s)
+  120/300 questions  (8s)
+  130/300 questions  (13s)
+  140/300 questions  (18s)
+  150/300 questions  (23s)
+  160/300 questions  (28s)
+  170/300 questions  (32s)
+  180/300 questions  (36s)
+  190/300 questions  (41s)
+  200/300 questions  (46s)
+  210/300 questions  (51s)
+  220/300 questions  (57s)
+  230/300 questions  (61s)
+  240/300 questions  (66s)
+  250/300 questions  (70s)
+  260/300 questions  (77s)
+  270/300 questions  (82s)
+  280/300 questions  (88s)
+  290/300 questions  (93s)
+  300/300 questions  (98s)
+
+================ results ================
+questions          300
+S (leaderboard)    0.4149   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.3749
+answer EM          0.2867
+evidence F1        0.5750
+mean search calls  3.48
+mean LLM calls     4.51
+status             {'ok': 300}
+outputs            runs/r12_nogold_copy/
