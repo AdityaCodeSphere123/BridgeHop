@@ -31,6 +31,7 @@ PLAN_MAX_OVERLAP = 0.9     # a Q1 that repeats this much of the question is a ba
 W_PREFER, W_CITED = 2, 1   # citation weights: right kind of passage, chosen by the LLM
 W_WORDS = 1                # citation weight for each sub-question word in the passage
 MAX_ANSWER_WORDS = 10      # a longer reply is a sentence, not an answer
+MAX_ROUNDS = 8             # search-and-read rounds per question (each read costs an LLM call)
 
 
 class Notes:
@@ -225,7 +226,10 @@ def plan(question: str, notes: Notes, tools) -> None:
     first = None
     prompts = [PLAN_PROMPT, PLAN_RETRY_PROMPT]
     for k in range(2):
-        out = tools.llm(prompts[k].format(question=question), max_tokens=80)
+        try:
+            out = tools.llm(prompts[k].format(question=question), max_tokens=80)
+        except LLMError:  # the server failed: try the other prompt
+            continue
         q1 = re.search(r"Q1\s*:\s*(.+)", out)
         if q1 and NOT_AN_ENTITY.match(q1.group(1)):
             # Q1 asks for a date or number, so the two hops were merged.
@@ -239,6 +243,22 @@ def plan(question: str, notes: Notes, tools) -> None:
         first = first or parsed
     if first:  # the second plan was no better: keep the first
         notes.subqs = list(first)
+    elif phrase_split(question):  # no usable plan: split on the grammar of the question
+        notes.subqs = list(phrase_split(question))
+
+
+NAME = r"[A-Z][\w.'&-]*(?:\s+(?:of\s+|the\s+|and\s+)?[A-Z][\w.'&-]*)*"
+
+
+def phrase_split(question: str):
+    """Fallback split without the LLM: the hidden entity is often a possessive ("X's team") or
+    "the Y of X" phrase. Returns (Q1, Q2) or None."""
+    m = re.search(rf"\b({NAME})'s\s+([a-z]+)\b", question) or re.search(rf"\bthe\s+([a-z]+)\s+of\s+({NAME})", question)
+    if not m:
+        return None
+    phrase = m.group(0)
+    q2 = question.replace(phrase, "#1", 1)
+    return (f"What is {phrase}?", q2) if q2 != "#1" else None
 
 
 # The bridge is a person, place, group or work, never a date, number or reason.
@@ -787,17 +807,26 @@ def citations(question: str, final: str, notes: Notes) -> list[str]:
 def run(question: str, tools) -> dict:
     notes = Notes(question)
     try:
-        plan(question, notes, tools)
+        try:
+            plan(question, notes, tools)
+        except LLMError:  # the server failed: go on without a plan (both hops use the question)
+            pass
         searches = first_queries(question, notes)
-        while True:
+        for _ in range(MAX_ROUNDS):
             for query, k in searches[: tools.budget_left()["search_calls"]]:
                 notes.add(query, tools.search(query, k=k))
-            read(question, notes, tools)
+            try:
+                read(question, notes, tools)
+            except LLMError:  # the server failed during a read: count it as a failed read and go on
+                notes.attempts[notes.hop] += 1
             if should_stop(question, notes, tools):
                 break
-            searches = next_query(question, notes, tools)
+            try:
+                searches = next_query(question, notes, tools)
+            except LLMError:
+                searches = []
     except (BudgetExhausted, PromptTooLong, LLMError):
-        pass  # out of budget or the server failed: answer with what we have
+        pass  # out of budget: answer with what we have
     try:
         return answer(question, notes, tools)
     except Exception:  # never crash: a crash scores 0

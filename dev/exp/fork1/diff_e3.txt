@@ -1,0 +1,7 @@
+A=0.6069 B=0.6067 B misses=0
+(-0.9, 'In what geographic region is the country where Teafuone is located?', 'Oceania', 'Oceania', 'Asia and the Pacific')
+(-0.8, 'What cigars are named after the island capital of the country of origi', 'Havana cigars', 'Havana', 'Areito')
+(-0.4, 'What county shares a border with the county of Ross Township?', 'Indiana County', 'Baranya County', 'Ohio')
+(0.27, "When did Chopin's family move to the city Eisenhower visited in 1945?", 'October 1810', '1810', 'October 1810')
+(0.9, 'The number of Imax screens in the US and Canada showing the film with ', '374', '388', '374')
+(0.9, 'Which city in the province where Tokyo Rose was founded borders Rivier', 'Edmundston', 'New Brunswick', 'Edmundston')

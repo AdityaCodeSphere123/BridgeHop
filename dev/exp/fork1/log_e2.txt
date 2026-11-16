@@ -1,0 +1,46 @@
+Loading corpus and BM25 index ...
+Running dev/exp/fork1/agent_e2.py on 300 questions with 8 workers ...
+  10/300 questions  (3s)
+  20/300 questions  (6s)
+  30/300 questions  (11s)
+  40/300 questions  (15s)
+  50/300 questions  (19s)
+  60/300 questions  (21s)
+  70/300 questions  (24s)
+  80/300 questions  (28s)
+  90/300 questions  (30s)
+  100/300 questions  (35s)
+  110/300 questions  (37s)
+  120/300 questions  (41s)
+  130/300 questions  (45s)
+  140/300 questions  (50s)
+  150/300 questions  (53s)
+  160/300 questions  (56s)
+  170/300 questions  (60s)
+  180/300 questions  (63s)
+  190/300 questions  (67s)
+  200/300 questions  (73s)
+  210/300 questions  (77s)
+  220/300 questions  (79s)
+  230/300 questions  (81s)
+  240/300 questions  (85s)
+  250/300 questions  (88s)
+  260/300 questions  (92s)
+  270/300 questions  (94s)
+  280/300 questions  (152s)
+  290/300 questions  (154s)
+  300/300 questions  (159s)
+
+================ results ================
+questions          300
+S (leaderboard)    0.5845   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.5677
+answer EM          0.4733
+evidence F1        0.6517
+mean search calls  4.88
+mean LLM calls     5.20
+status             {'ok': 299, 'timeout': 1}
+outputs            runs/fork1_e2/
+
+1 question(s) did not finish normally; first error (timeout):
+exceeded 60s wall-clock limit
