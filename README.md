@@ -1,151 +1,171 @@
-# COL 764 Assignment 4 — Iterative Retrieval for Multi-hop QA (starter kit)
+# BridgeHop: a budgeted agent for two-hop question answering
 
-Read the handout first. This README is only about running the code.
+BridgeHop answers questions that need two facts from two different documents, such as
+*"When did trolley buses stop running in the birthplace of George Shipley?"*. A single search cannot find the
+second document, because it is about an entity the question never names (here, Shipley's birthplace). BridgeHop
+first finds that linking entity, the **bridge**, then searches again with it, and spends whatever budget is left
+on checking its answer.
 
-You get a working **single-shot** QA system (baseline **B1**). It searches once with BM25 and asks the
-staff-hosted LLM to answer from the top passages. Your job is to turn it into an **iterative** agent by
-editing **`agent.py`**. You will write three functions:
+Everything runs under a strict per-question budget: **5 BM25 searches, 6 calls to a small 4B LLM, 3,000 prompt
+tokens per call and 60 seconds**. Within that budget BridgeHop is **2.5x better than single-shot retrieval** on
+300 MuSiQue dev questions.
 
-| Function | What it decides |
-|---|---|
-| `next_query(question, notes, tools)` | what to search for next (e.g. the bridge entity) |
-| `should_stop(question, notes, tools)` | whether the evidence is enough (or the budget is gone) |
-| `answer(question, notes, tools)` | a short answer plus at most 3 cited `doc_id`s |
+![Results](docs/figures/comparison.png)
 
-You don't touch indexing, the LLM server or evaluation. They are provided, and they behave exactly as in the
-official harness.
+| System | Exact match | Answer F1 | Evidence F1 | Score S | Searches | LLM calls |
+|---|---|---|---|---|---|---|
+| Single-shot (1 search, 1 LLM call) | 0.1400 | 0.2110 | 0.3717 | 0.2431 | 1.00 | 1.00 |
+| Simple iterative baseline | 0.2033 | 0.2596 | 0.4767 | 0.3030 | 2.03 | 3.03 |
+| **BridgeHop** | **0.4967** | **0.5965** | **0.6650** | **0.6102** | 4.38 | 5.25 |
+
+*S = 0.8 x answer F1 + 0.2 x evidence F1. Evidence F1 measures whether the cited passages are the two gold
+supporting paragraphs. Searches and LLM calls are means per question.*
 
 ---
 
-## 1. Setup (about 10 minutes)
+## How it works
+
+```mermaid
+flowchart LR
+    Q[Question] --> P[Plan: split into Q1 and Q2]
+    P --> S1[Search hop 1: Q1 + question]
+    S1 --> R1[Read hop 1 -> bridge]
+    R1 -- nothing found --> S1
+    R1 --> S2[Search hop 2: Q2 with bridge]
+    S2 --> R2[Read hop 2 twice -> answer + judge]
+    R2 -- nothing found --> S2
+    R2 --> A[Answer + 2 citations]
+```
+
+**1. Planning.** One LLM call rewrites the question as two single-hop questions: Q1 asks for the bridge and Q2 refers
+to Q1's answer as `#1` (*"Where was George Shipley born?"*, *"When did trolley buses stop running in #1?"*). Bad
+plans are caught by simple checks and re-asked with a second prompt: Q2 without `#1`, a Q1 that repeats the question,
+a Q1 that asks for a date or number (the bridge is always an entity), or a Q1 that loses every name in the question.
+If both attempts fail, a possessive (*X's team*) or *the Y of X* phrase is split off without the LLM.
+
+**2. Retrieval (`next_query`).** Hop 1 searches BM25 with Q1 and with the full question; hop 2 with Q2 (bridge
+filled in) and with the bridge plus the question. Each hop's result lists are merged with reciprocal rank fusion.
+When a read finds nothing, the next query depends on what failed: hop 1 adds the first sentence of a short passage the
+LLM writes as a guess (Query2doc), hop 2 searches for the bridge's own article. If the bridge still cannot be found,
+the model's own knowledge supplies it and hop 2 continues as usual.
+
+**3. Reading and verification.** The LLM reads 10 whole passages at hop 1 and 12 at hop 2. A 4B model reads the
+first passages best, so the article named in the question is always shown first:
+
+![Bridge accuracy by passage position](docs/figures/bridge_position.png)
+
+A bridge taken from a lower passage is checked again after a Query2doc search. The hop-2 answer is read a second time
+with the passages reversed and the original question; if the two answers differ, a judge call compares them with
+their passages and keeps the first when unsure. With a call to spare, the model also answers without passages, and
+the judge decides again if a retrieved passage supports that answer.
+
+**4. Stopping and answering (`should_stop`, `answer`).** The search stops once hop 2 has an answer of the expected
+type (a date for *when*, a number for *how many*) that is not the bridge itself, or when only one LLM call or 15 s
+remain. If hop 2 never answered, the model guesses with the bridge as a hint, with a rejected answer of the right type
+or a span from the best passage as fallbacks. Two passages are cited: one with the bridge and one with the answer.
+
+**5. Robustness.** Every step checks the remaining budget, and a failed LLM call never ends a question: a failed plan
+tries the other prompt and a failed read counts as a failed attempt. With a healthy server this changes nothing; when
+calls fail, it keeps most of the score:
+
+![Robustness to server failures](docs/figures/robustness.png)
+
+## How it improved
+
+Each bar is the dev score after a group of components was added:
+
+![Score as components were added](docs/figures/progress.png)
+
+The biggest single gains came from the second read with a judge, from putting the topic article first, and from
+Query2doc retries. With only six LLM calls, spending a call on checking an answer paid off more than spending it on
+finding more passages.
+
+**What did not help**
+
+| Idea | Effect on S | Why |
+|---|---|---|
+| Three hop-2 searches at the start instead of two | -0.022 | the retry after a failed read lost its search |
+| Asking the reader to copy the answer word for word | -0.049 | the model picked the wrong facts more often |
+| Quoting the evidence before answering | -0.010 | longer outputs, more reading mistakes |
+| Query2doc for every question | worse | used the calls the judge needed |
+| 14 passages at hop 2, a third citation | no gain | more noise for the reader |
+
+## Where it still fails
+
+![Error types](docs/figures/errors.png)
+
+Iterating cuts bridge failures from 191 to 35. Most remaining errors are reading mistakes with the right paragraphs
+in hand, or answers that are right in another form (*August 5, 1940* vs *5 August 1940*). With the right bridge and
+the second paragraph retrieved, answer F1 is 0.76; with a wrong bridge and no second paragraph it drops to 0.14.
+
+---
+
+## Running it
+
+**Requirements:** Python 3.10+, `numpy`, `requests`, and an OpenAI-compatible LLM server such as vLLM
+(developed with Qwen3-4B-Instruct).
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate      # Python 3.10+
-pip install -r requirements.txt                          # numpy, requests
+git clone https://github.com/AdityaCodeSphere123/COL764-Assignment4.git bridgehop
+cd bridgehop
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-**Data.** Download the data bundle from <!-- TBD --> **[link on Moodle]** and unpack it so that you have:
+**Data.** The agent expects a MuSiQue-style corpus with a prebuilt BM25 index (the data files are not included in
+the repository):
 
 ```
-data/corpus.jsonl     # ~139K paragraphs: {"doc_id", "title", "text"}
-data/bm25/            # the prebuilt BM25 index (do not rebuild unless told to)
-data/dev.jsonl        # ~300 dev questions with gold answers and supporting doc_ids
+data/corpus.jsonl     # paragraphs: {"doc_id", "title", "text"}
+data/bm25/            # BM25 index (build it with: python build_index.py --data-dir data)
+data/dev.jsonl        # questions with gold answers and supporting doc_ids
 ```
 
-**LLM endpoint.** Copy the example config and fill in the values announced on Moodle:
+**LLM endpoint.** Create `config.json` (it is git-ignored, so your key stays local):
+
+```json
+{
+  "llm_base_url": "http://localhost:8000",
+  "llm_model": "your-model-name",
+  "llm_api_key": "YOUR_KEY",
+  "token_count": "server",
+  "extra_body": {}
+}
+```
+
+Use `"token_count": "approx"` if your server has no `/tokenize` endpoint.
+
+**Run.**
 
 ```bash
-cp config.example.json config.json
+python run_dev.py --mock-llm --limit 5      # offline smoke test, no LLM needed (scores are meaningless)
+python run_dev.py --question "Who is the spouse of the Green performer?"   # one question with a full trace
+python run_dev.py --limit 50                # first 50 dev questions
+python run_dev.py                           # full dev set
+python dev/analyze.py runs/<run-folder>     # retrieval diagnostics and labelled errors
+python dev/make_figures.py                  # regenerate the figures in docs/figures/
 ```
 
-Check that everything works without using the server:
+Each run writes `runs/<timestamp>/` with `metrics.json` (scores), `predictions.jsonl` (answers and citations),
+`traces.jsonl` (every search query and LLM prompt) and `review.jsonl` (questions sorted worst first).
 
-```bash
-python run_dev.py --mock-llm --limit 5
-```
+## Project layout
 
-You should see a results table, with all statuses `ok`. The mock LLM's answers are nonsense, so ignore the
-scores. Then run the real baseline:
-
-```bash
-python run_dev.py --limit 50
-```
-
-## 2. Developing
-
-```bash
-python run_dev.py                                   # full dev set
-python run_dev.py --limit 30 --workers 4            # quicker
-python run_dev.py --ids 2hop__13548_13529           # specific questions
-python run_dev.py --question "Who is the spouse of the Green performer?"   # one question + full trace
-```
-
-Each run writes `runs/<timestamp>/`:
-
-* `metrics.json`: S, answer F1/EM, evidence F1, mean calls, status counts
-* `review.jsonl`: one line per question, **worst first**: question, gold answer, your answer, cited vs. gold
-  doc_ids. Start your error analysis here.
-* `traces.jsonl`: every search query and LLM prompt/output, per question
-
-Each line of `dev.jsonl` also has a `decomposition` field with the gold single-hop sub-questions and their
-answers. Use it to see what the bridge entity should have been. It is **not** available at test time.
-
-### Tools your agent can use
-
-```python
-tools.search(query, k=5)       -> list[Passage]   # BM25, 1 <= k <= 10
-tools.llm(prompt, max_tokens)  -> str             # temperature 0, max_tokens clamped to 256
-tools.budget_left()            -> {"search_calls": .., "llm_calls": .., "seconds": ..}
-# Passage: .doc_id .title .text ; str(p) == "[doc_id] title: text"
-```
-
-### Budget per question (enforced)
-
-| Resource | Limit |
+| Path | Contents |
 |---|---|
-| `tools.search` calls | 5 |
-| `tools.llm` calls | 6 |
-| prompt length per LLM call | 3,000 tokens: longer prompts raise `PromptTooLong` and are **not** counted |
-| completion per LLM call | 256 tokens |
-| wall-clock time | 60 s: then the question is killed and scores 0 |
+| `agent.py` | the agent: planning, `next_query`, `should_stop`, `answer` |
+| `a4/` | framework: BM25 search, budgeted tools, LLM client, scorer |
+| `run_dev.py` | runs the agent on the dev set and scores it |
+| `dev/analyze.py` | error analysis: retrieval diagnostics, bridge accuracy, error categories |
+| `dev/make_figures.py` | figures for this README |
+| `dev/exp/crun.py` | runs the dev set with a disk cache of LLM replies (repeat runs cost no tokens) |
+| `dev/exp/replay.py` | scores agent changes offline from the cache, with zero LLM calls |
+| `dev/b1_agent.py` | the single-shot baseline used for comparison |
+| `report/` | the write-up (LaTeX) |
 
-Calls beyond the limit raise `BudgetExhausted` (import it from `a4`). Catch it and return your best answer.
-The provided `run()` already does this.
+## Credits
 
-### What you may import in your agent
-
-Python standard library: `re json math string collections itertools functools operator dataclasses typing
-heapq bisect unicodedata difflib statistics textwrap enum abc copy time random`, plus `numpy` and `a4`. Your
-own helper modules can live in a `helpers/` folder next to `agent.py`.
-
-Not allowed: file access (`open`), network, `os`, `sys`, `subprocess`, `eval`/`exec`, other models or
-packages. The agent runs in a sandboxed process with no network access.
-
-## 3. Submitting
-
-**Leaderboard (dev set, at most 3 per day).**
-
-```bash
-python make_submission.py 2023CS10000 --no-report
-```
-
-Upload the zip at <!-- TBD --> **[leaderboard link on Moodle]**.
-
-**Final (Moodle, by the deadline).**
-
-```bash
-python make_submission.py 2023CS10000     # agent.py + helpers/ + report.pdf, checked automatically
-```
-
-`check_submission.py <zip>` runs the same static checks as the official harness:
-
-* only `.py` files and `report.pdf`
-* code under 100 KB
-* only allowed imports
-* no large literal tables (these are reviewed)
-
-Your last leaderboard submission must be identical to the `agent.py` you submit on Moodle.
-
-## 4. Grading (summary; the handout is authoritative)
-
-| Component | Weight |
-|---|---|
-| Functionality: runs cleanly, respects the budget, genuinely iterative | 20% |
-| Leaderboard: hidden test set, S = 0.8 × answer F1 + 0.2 × evidence F1 | 45% |
-| Report (≤ 2 pages) | 30% |
-| Code quality | 5% |
-
-Leaderboard marks depend on whether you beat the single-shot baseline B1 (score S_B1):
-
-* **Below S_B1:** 0.4 × S/S_B1 of the marks.
-* **At or above S_B1:** 0.5 + 0.5 × (your percentile among everyone else who also beat B1).
-
-**Beating the single-shot baseline guarantees at least half of the leaderboard marks.**
-
-## 5. FAQ
-
-* **"Could not import your agent"**: there is a syntax error or a disallowed import. The message shows the traceback.
-* **Status `timeout`**: one question took more than 60 s. Usually this means too many LLM calls with long
-  outputs. Use a small `max_tokens` (e.g. 32–64) for short answers.
-* **`PromptTooLong`**: pass fewer passages. `notes.as_text(4)` instead of `notes.as_text(8)`.
-* **Do not edit `a4/`.** The official harness uses its own copy.
+The search/LLM/scoring framework in `a4/` and the BM25 index come from the Information Retrieval course (COL764)
+at IIT Delhi. Data: MuSiQue (Trivedi et al., TACL 2022). The loop follows IRCoT (Trivedi et al., ACL 2023) and
+ReAct (Yao et al., ICLR 2023); rank fusion follows Cormack, Clarke and Buettcher (SIGIR 2009); query expansion
+follows Query2doc (Wang et al., EMNLP 2023).
