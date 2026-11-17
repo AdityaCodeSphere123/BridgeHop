@@ -428,17 +428,12 @@ reply unknown.
 Answer:"""
 
 
-# Questions about the current state of things: the corpus is a fixed snapshot, while the model may remember newer
-# facts, so its memory must not overrule what the passages say.
-TIME_SENSITIVE = re.compile(r"\b(last|latest|most recent|current|currently|now|today|recent)\b", re.I)
-
-
 def memory_check(question: str, notes: Notes, tools, context: str, asked: str, judge_q: str, ans: str, cited):
     """Ask the model to answer from memory, without passages. If its answer is different and a
     passage contains it, the judge picks one (in hop 2 a spare search may look for that passage).
     Our answer is A and wins on any doubt."""
     left = tools.budget_left()
-    if left["llm_calls"] < 2 or left["seconds"] < 20 or TIME_SENSITIVE.search(question):
+    if left["llm_calls"] < 2 or left["seconds"] < 20:
         return ans, cited
     try:
         out = tools.llm(CLOSED_PROMPT.format(q=asked), max_tokens=24)

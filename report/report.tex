@@ -130,17 +130,16 @@ The 4B model reads the first passages best (Figure~\ref{fig:pos}), so the articl
 first, and a bridge taken from a lower passage is checked again after a Query2doc search. The second-hop answer is
 then read once more, with the passages in reverse order and with the original question. If the two answers differ,
 a judge call compares them with their passages and keeps the first when unsure. With a call to spare, the model also
-answers without passages, and the judge decides again if a retrieved passage supports that answer. This memory check
-is skipped for questions about the current or latest state of something, because the corpus is an older snapshot
-than the model's knowledge. In the final run these checks replaced 20 answers, 9 for the better and none for the worse.
+answers without passages, and the judge decides again if a retrieved passage supports that answer. In the final run
+these checks replaced 21 answers, 9 for the better and 1 for the worse.
 
 \textbf{Stopping and the final answer.} Searching stops as soon as the second hop has an answer of the expected type
 (a date for \emph{when}, a number for \emph{how many}) that is not the bridge itself, or when only one LLM call or
 15\,s remain. If the second hop never answered, the model makes a best guess with the bridge as a hint, and a
 rejected answer of the right type or a span from the best passage serve as fallbacks. The answer is returned as the
 model wrote it, with two citations: a passage containing the bridge and one containing the answer. Every step checks
-the remaining search, LLM and time budget, and if the server fails a call the agent carries on with what is left; in
-a test where 5\% of calls failed on purpose, this kept $S$ at 0.601 instead of 0.539.
+the remaining search, LLM and time budget, and if the server fails a call the agent carries on with what is left:
+with 5\% of calls failing on purpose, $S$ is 0.601 instead of 0.539.
 
 % =====================================================================
 \section{Development-set results}
@@ -153,7 +152,7 @@ Dev set, 300 questions & EM & Ans.\ F1 & Ev.\ F1 & $S$ & Search & LLM\\
 \midrule
 B1 single-shot (starter) & 0.1400 & 0.2110 & 0.3717 & 0.2431 & 1.00 & 1.00\\
 B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.03\\
-\textbf{My agent (final)} & \textbf{0.5000} & \textbf{0.5999} & \textbf{0.6650} & \textbf{0.6129} & 4.36 & 5.22\\
+\textbf{My agent (final)} & \textbf{0.4967} & \textbf{0.5965} & \textbf{0.6650} & \textbf{0.6102} & 4.37 & 5.25\\
 \bottomrule
 \end{tabular}
 \captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search, LLM: mean calls per question. All 300 questions ran without errors.}
@@ -212,7 +211,7 @@ components were added.
     /pgf/number format/fixed zerofill, /pgf/number format/precision=4}]
 \addplot[fill=cA!45, draw=cA] coordinates {(0.5086,a) (0.5213,b) (0.5402,c) (0.5521,d) (0.5667,e) (0.5757,f)
   (0.5896,g) (0.5992,h)};
-\addplot[fill=cC!50, draw=cC] coordinates {(0.6129,i)};
+\addplot[fill=cC!50, draw=cC] coordinates {(0.6102,i)};
 \end{axis}
 \end{tikzpicture}
 \captionof{figure}{Dev $S$ of selected earlier versions as components were added; the last bar is the final agent.}
@@ -233,7 +232,7 @@ its passage also lowered $S$ (by 0.049), because the model then picked the wrong
 % =====================================================================
 \section{Error analysis}
 \noindent\begin{minipage}[c]{0.50\textwidth}
-The final agent misses 150 of the 300 dev questions (EM $=0$). Figure~\ref{fig:cats} compares the automatic labels
+The final agent misses 151 of the 300 dev questions (EM $=0$). Figure~\ref{fig:cats} compares the automatic labels
 from \texttt{dev/analyze.py} with B1: iterating cuts bridge failures (i) from 191 to 35, so most remaining errors
 are reading errors (iii) or answers that are right in another form (iv), such as \emph{August 5, 1940} for
 \emph{5 August 1940}. Table~\ref{tab:err} lists ten of these questions, each labelled by hand from its trace.
@@ -249,11 +248,11 @@ are reading errors (iii) or answers that are right in another form (iv), such as
   legend cell align=left, tick label style={font=\scriptsize}, axis lines*=left, xmajorgrids, grid style={gray!20}]
 \addplot[fill=cG!35, draw=cG] coordinates {(0,other) (52,marked) (15,misread) (0,early) (191,bridge)};
 \addlegendentry{B1}
-\addplot[fill=cA!60, draw=cA] coordinates {(8,other) (51,marked) (42,misread) (14,early) (35,bridge)};
+\addplot[fill=cA!60, draw=cA] coordinates {(8,other) (51,marked) (42,misread) (15,early) (35,bridge)};
 \addlegendentry{final agent}
 \end{axis}
 \end{tikzpicture}
-\captionof{figure}{Errors (EM $=0$) by automatic label: B1 258, final agent 150.}
+\captionof{figure}{Errors (EM $=0$) by automatic label: B1 258, final agent 151.}
 \label{fig:cats}
 \end{minipage}
 
