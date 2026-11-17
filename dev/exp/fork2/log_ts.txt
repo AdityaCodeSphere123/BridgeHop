@@ -1,0 +1,43 @@
+Loading corpus and BM25 index ...
+Running agent.py on 300 questions with 8 workers ...
+  10/300 questions  (0s)
+  20/300 questions  (0s)
+  30/300 questions  (0s)
+  40/300 questions  (0s)
+  50/300 questions  (0s)
+  60/300 questions  (0s)
+  70/300 questions  (0s)
+  80/300 questions  (0s)
+  90/300 questions  (0s)
+  100/300 questions  (1s)
+  110/300 questions  (1s)
+  120/300 questions  (1s)
+  130/300 questions  (1s)
+  140/300 questions  (1s)
+  150/300 questions  (1s)
+  160/300 questions  (1s)
+  170/300 questions  (1s)
+  180/300 questions  (1s)
+  190/300 questions  (1s)
+  200/300 questions  (1s)
+  210/300 questions  (1s)
+  220/300 questions  (1s)
+  230/300 questions  (1s)
+  240/300 questions  (1s)
+  250/300 questions  (1s)
+  260/300 questions  (1s)
+  270/300 questions  (1s)
+  280/300 questions  (1s)
+  290/300 questions  (1s)
+  300/300 questions  (1s)
+
+================ results ================
+questions          300
+S (leaderboard)    0.6129   = 0.8 x answer F1 + 0.2 x evidence F1
+answer F1          0.5999
+answer EM          0.5000
+evidence F1        0.6650
+mean search calls  4.36
+mean LLM calls     5.22
+status             {'ok': 300}
+outputs            runs/final_ts/

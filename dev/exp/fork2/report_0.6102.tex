@@ -1,0 +1,312 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[margin=0.62in,top=0.55in,bottom=0.62in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage[varqu]{inconsolata}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepackage{caption}
+\captionsetup{font=footnotesize,labelfont=bf,skip=2pt}
+\usepackage{graphicx}
+
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{6pt}{3pt}
+\titlespacing*{\paragraph}{0pt}{2pt}{5pt}
+\titleformat*{\section}{\large\bfseries\color{ink}}
+\setlength{\textfloatsep}{5pt}
+\setlength{\floatsep}{4pt}
+\setlength{\intextsep}{4pt}
+\setlist{nosep,leftmargin=1.1em}
+\setlength{\parskip}{3pt}
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{4pt}
+\raggedbottom
+\setlength{\emergencystretch}{2em}
+
+% ---------- colours ----------
+\definecolor{ink}{HTML}{1A365D}
+\definecolor{cA}{HTML}{2B6CB0}   % blue
+\definecolor{cB}{HTML}{DD6B20}   % orange
+\definecolor{cC}{HTML}{2F855A}   % green
+\definecolor{cD}{HTML}{805AD5}   % purple
+\definecolor{cG}{HTML}{718096}   % grey
+
+\begin{document}
+
+% ---------- Title Page ----------
+\begin{titlepage}
+\centering
+\vspace*{1.2cm}
+
+\IfFileExists{iitd.png}{{\includegraphics[width=4.2cm]{iitd.png}}}{}
+
+\vspace{1.0cm}
+
+{\huge\scshape Indian Institute of Technology Delhi\par}
+
+\vspace{0.4cm}
+
+{\Large COL764: Information Retrieval and Web Search\par}
+
+\vspace{2.2cm}
+
+{\rule{0.85\textwidth}{0.8pt}\par}
+\vspace{0.6cm}
+{\LARGE\bfseries Assignment 4: Iterative Retrieval for Multi-hop\\[4pt] Question Answering\par}
+\vspace{0.6cm}
+{\rule{0.85\textwidth}{0.8pt}\par}
+
+\vspace{2.5cm}
+
+{\Large\bfseries Instructor\par}
+\vspace{0.25cm}
+{\Large Prof.\ Srikanta Bedathur\par}
+
+\vspace{1.2cm}
+
+{\Large\bfseries Submitted by\par}
+\vspace{0.25cm}
+{\Large Aditya Anand\par}
+\vspace{0.1cm}
+{\large 2023CS50284\par}
+
+\vfill
+
+{\Large \today\par}
+
+\vspace{1cm}
+
+\end{titlepage}
+
+% =====================================================================
+\newpage
+
+% =====================================================================
+\section{Final agent design}
+The agent first finds the entity that links the two facts (the \emph{bridge}), then searches again with it.
+\texttt{next\_query} chooses each search, \texttt{should\_stop} decides when the evidence is enough, and
+\texttt{answer} forms the reply and its citations.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize, node distance=0.22cm,
+  st/.style={draw=black, line width=0.4pt, align=center, text width=2.55cm, inner sep=2.5pt, minimum height=1.05cm},
+  arr/.style={-{Stealth[length=3.5pt]}, black, line width=0.5pt}]
+  \node[st, fill=cD!10] (p) {\textbf{plan} (1--2 calls)\\Q1, Q2 with \#1};
+  \node[st, fill=cA!10, right=of p] (s1) {\textbf{search hop 1}\\Q1 + question, $k{=}10$ each, RRF};
+  \node[st, fill=cC!10, right=of s1] (r1) {\textbf{read hop 1}\\10 passages\\$\Rightarrow$ bridge};
+  \node[st, fill=cA!10, right=of r1] (s2) {\textbf{search hop 2}\\Q2[\#1=bridge] + bridge\,+\,question};
+  \node[st, fill=cC!10, right=of s2] (r2) {\textbf{read hop 2}\\12 passages, twice\\$\Rightarrow$ answer (+ judge)};
+  \node[st, fill=cB!10, right=of r2] (a) {\textbf{answer}\\fallbacks + cite 2 passages};
+  \foreach \u/\v in {p/s1,s1/r1,r1/s2,s2/r2,r2/a} \draw[arr] (\u) -- (\v);
+  \draw[arr, dashed, cG] (r1.south) to[out=-150,in=-30] node[below, font=\tiny]{unknown: retry search} (s1.south);
+  \draw[arr, dashed, cG] (r2.south) to[out=-150,in=-30] node[below, font=\tiny]{unknown: search bridge} (s2.south);
+\end{tikzpicture}
+\end{center}
+
+\textbf{Planning and retrieval.} One LLM call rewrites the question as two single-hop questions: Q1 asks for the
+bridge, and Q2 refers to Q1's answer as \#1. A plan is asked again with a second prompt when Q2 does not use \#1,
+when Q1 only repeats the question, when Q1 asks for a date or a number instead of an entity, or when Q1 drops every
+name in the question. If the second attempt also fails, a possessive (\emph{X's team}) or \emph{the Y of X} phrase is
+split off without the LLM. The first hop searches BM25 with Q1 and with the full question, the second hop with Q2
+(bridge filled in) and with the bridge plus the question. Each search returns 10 passages, and the lists of a hop are
+merged by reciprocal rank fusion. When a read finds nothing, the next query depends on the hop: the first hop adds
+the opening sentence of a short passage the LLM writes as a guess (Query2doc), and the second hop searches for the
+bridge's own article or, for \emph{when} questions, the bridge plus a guessed sentence. If the bridge still cannot
+be found, the model's own knowledge supplies it and the second hop continues as usual.
+
+\textbf{Reading and checking the answer.} The LLM reads 10 whole passages at the first hop and 12 at the second.
+The 4B model reads the first passages best (Figure~\ref{fig:pos}), so the article named in the question is placed
+first, and a bridge taken from a lower passage is checked again after a Query2doc search. The second-hop answer is
+then read once more, with the passages in reverse order and with the original question. If the two answers differ,
+a judge call compares them with their passages and keeps the first when unsure. With a call to spare, the model also
+answers without passages, and the judge decides again if a retrieved passage supports that answer. In the final run
+these checks replaced 21 answers, 9 for the better and 1 for the worse.
+
+\textbf{Stopping and the final answer.} Searching stops as soon as the second hop has an answer of the expected type
+(a date for \emph{when}, a number for \emph{how many}) that is not the bridge itself, or when only one LLM call or
+15\,s remain. If the second hop never answered, the model makes a best guess with the bridge as a hint, and a
+rejected answer of the right type or a span from the best passage serve as fallbacks. The answer is returned as the
+model wrote it, with two citations: a passage containing the bridge and one containing the answer. Every step checks
+the remaining search, LLM and time budget, and if the server fails a call the agent carries on with what is left:
+with 5\% of calls failing on purpose, $S$ is 0.601 instead of 0.539.
+
+% =====================================================================
+\section{Development-set results}
+\begin{minipage}[t]{0.585\textwidth}
+\vspace{0pt}
+\centering\footnotesize
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Dev set, 300 questions & EM & Ans.\ F1 & Ev.\ F1 & $S$ & Search & LLM\\
+\midrule
+B1 single-shot (starter) & 0.1400 & 0.2110 & 0.3717 & 0.2431 & 1.00 & 1.00\\
+B2 staff iterative (leaderboard) & 0.2033 & 0.2596 & 0.4767 & 0.3030 & 2.03 & 3.03\\
+\textbf{My agent (final)} & \textbf{0.4967} & \textbf{0.5965} & \textbf{0.6650} & \textbf{0.6102} & 4.37 & 5.25\\
+\bottomrule
+\end{tabular}
+\captionof{table}{$S = 0.8\cdot$Ans.\ F1$\,+\,0.2\cdot$Ev.\ F1. Search, LLM: mean calls per question. All 300 questions ran without errors.}
+\label{tab:main}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}
+\vspace{0pt}
+\centering\footnotesize
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Diagnostic & B1 & Mine\\
+\midrule
+both gold paragraphs retrieved & 15.3\% & 69.7\%\\
+hop-2 paragraph retrieved & 23.3\% & 72.3\%\\
+bridge (hop-1 answer) correct & -- & 76.3\%\\
+gold paragraphs cited (of 2) & 0.74 & 1.33\\
+\bottomrule
+\end{tabular}
+\captionof{table}{Retrieval and bridge accuracy (\texttt{dev/analyze.py}).}
+\end{minipage}
+
+\smallskip
+All numbers come from one run of the final \texttt{agent.py} (the leaderboard version) and of B1 over the 300 dev
+questions, scored by the course's \texttt{a4} evaluator. Iterating raises exact match from 0.14 to 0.50 and evidence F1
+from 0.37 to 0.67. Most of the gain comes from the second search: both gold paragraphs are retrieved for 209
+questions instead of 46, and on those answer F1 is 0.74. A wrong bridge is costly: with a wrong bridge and no
+second-hop paragraph, answer F1 drops to 0.14 ($n{=}42$). Figure~\ref{fig:steps} shows how dev $S$ grew as the
+components were added.
+
+\medskip
+\noindent\begin{minipage}[b]{0.485\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[ybar, width=\linewidth, height=4.6cm, bar width=15pt, ymin=0, ymax=100, ylabel={bridge right (\%)},
+  symbolic x coords={1st,2nd,3rd or lower,not shown}, xtick=data, enlarge x limits=0.17,
+  nodes near coords, nodes near coords style={font=\scriptsize}, tick label style={font=\scriptsize}, label style={font=\scriptsize}, axis lines*=left, ymajorgrids, grid style={gray!20}]
+\addplot[fill=cA!55, draw=cA] coordinates {(1st,83) (2nd,71) (3rd or lower,67) (not shown,28)};
+\end{axis}
+\end{tikzpicture}
+\captionof{figure}{First hop-1 read: bridge accuracy by where the gold passage was shown ($n$ = 214, 24, 24, 32).}
+\label{fig:pos}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.485\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xbar, bar shift=0pt, width=3.7cm, height=3.7cm, scale only axis, bar width=6pt,
+  xmin=0.49, xmax=0.64, xtick={0.50,0.55,0.60}, xlabel={dev $S$},
+  xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+  symbolic y coords={a,b,c,d,e,f,g,h,i}, ytick={a,b,c,d,e,f,g,h,i}, y dir=reverse, enlarge y limits=0.07,
+  yticklabels={first iterative agent, +fallbacks\,/\,citations\,/\,RRF, +plan check \& retry prompt,
+    +topic article first, +second read \& judge, +original question in judge, +memory check,
+    +Query2doc retries, final: +recheck \& plan checks},
+  yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+  label style={font=\scriptsize}, axis lines*=left, xmajorgrids, grid style={gray!20},
+  nodes near coords, nodes near coords style={font=\scriptsize, /pgf/number format/fixed,
+    /pgf/number format/fixed zerofill, /pgf/number format/precision=4}]
+\addplot[fill=cA!45, draw=cA] coordinates {(0.5086,a) (0.5213,b) (0.5402,c) (0.5521,d) (0.5667,e) (0.5757,f)
+  (0.5896,g) (0.5992,h)};
+\addplot[fill=cC!50, draw=cC] coordinates {(0.6102,i)};
+\end{axis}
+\end{tikzpicture}
+\captionof{figure}{Dev $S$ of selected earlier versions as components were added; the last bar is the final agent.}
+\label{fig:steps}
+\end{minipage}
+
+% =====================================================================
+\section{An experiment that did not help}
+163 questions finished with a search unused, so I tried starting the second hop with three searches instead of two,
+adding the bridge plus the rest of Q2. An offline BM25 check looked promising: the extra query brought the
+second-hop paragraph into the 12 passages shown for 5 more questions with the right bridge. On the dev set, however,
+$S$ fell from 0.6069 to 0.5845, with 7 questions better and 17 worse, because the extra search used up the budget
+that the retry after a failed read needs. When asked when the currency of the country containing Ibo first
+circulated, the original agent read nothing useful at first and then found \emph{16 June 1980} with its Query2doc
+retry search; with the change no search was left, and the final guess was \emph{1911}. I kept two searches per hop. Asking the reader to copy the answer word for word from
+its passage also lowered $S$ (by 0.049), because the model then picked the wrong facts more often.
+
+% =====================================================================
+\section{Error analysis}
+\noindent\begin{minipage}[c]{0.50\textwidth}
+The final agent misses 151 of the 300 dev questions (EM $=0$). Figure~\ref{fig:cats} compares the automatic labels
+from \texttt{dev/analyze.py} with B1: iterating cuts bridge failures (i) from 191 to 35, so most remaining errors
+are reading errors (iii) or answers that are right in another form (iv), such as \emph{August 5, 1940} for
+\emph{5 August 1940}. Table~\ref{tab:err} lists ten of these questions, each labelled by hand from its trace.
+\end{minipage}\hfill
+\begin{minipage}[c]{0.46\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xbar, width=0.70\linewidth, height=5.0cm, bar width=6pt, xmin=0, xmax=230,
+  symbolic y coords={other,marked,misread,early,bridge}, ytick={other,marked,misread,early,bridge},
+  yticklabels={(v) other,(iv) marked wrong,(iii) misread,(ii) stopped early,(i) bridge not found},
+  nodes near coords, nodes near coords style={font=\tiny}, enlarge y limits=0.14,
+  legend style={font=\scriptsize, at={(0.98,0.04)}, anchor=south east, draw=none, fill=none},
+  legend cell align=left, tick label style={font=\scriptsize}, axis lines*=left, xmajorgrids, grid style={gray!20}]
+\addplot[fill=cG!35, draw=cG] coordinates {(0,other) (52,marked) (15,misread) (0,early) (191,bridge)};
+\addlegendentry{B1}
+\addplot[fill=cA!60, draw=cA] coordinates {(8,other) (51,marked) (42,misread) (15,early) (35,bridge)};
+\addlegendentry{final agent}
+\end{axis}
+\end{tikzpicture}
+\captionof{figure}{Errors (EM $=0$) by automatic label: B1 258, final agent 151.}
+\label{fig:cats}
+\end{minipage}
+
+\begin{center}
+\footnotesize\renewcommand{\arraystretch}{1.42}
+\begin{tabularx}{\textwidth}{@{}c>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{3.0cm}@{}}
+\toprule
+Type & Question (shortened) & Gold answer & My answer\\
+\midrule
+(i) & Last time Auburn won in the work location of Johnny Berthelot & 1999 & 1994\\
+(i) & Sibling of the composer of \emph{Downtown} & Astrid Young & Michael Gore\\
+(i) & Start of the civil war in the country Ita Ford is from & October 15, 1979 & April 1861\\
+(ii) & Manager when Tommy Logan's team won the Champions League & Roberto Di Matteo & Jos\'e Mourinho\\
+(ii) & Year Harrysong's country joined OPEC & 1971 & the 1970s\\
+(iii) & Where the 2007 World Series winner got Brandon Phillips from & Los Angeles Angels & Cleveland Indians\\
+(iii) & Average household size in the city served by WAJM & 2.46 & 2.50\\
+(iv) & When the country of Saldus Municipality joined the Soviet Union & 5 August 1940 & August 5, 1940\\
+(iv) & Forest by the southern border of Jerzy Passendorfer's death city & Kabaty & Kabaty Forest\\
+(v) & Who was targeted for defrauding elections in Hotel Courtland's state & a whole sentence & John Kerry\\
+\bottomrule
+\end{tabularx}
+\captionof{table}{Ten dev questions my agent gets wrong, by category: (i) bridge entity not found 3, (ii) stopped too
+early 2, (iii) evidence retrieved but answered wrongly 2, (iv) correct but marked wrong 2, (v) other 1.}
+\label{tab:err}
+\end{center}
+
+\textbf{Example 1 (i), Johnny Berthelot.} The gold first-hop paragraph is ranked first, but it says
+Berthelot sits in the Louisiana House \emph{based in his hometown of Gonzales}, so the model answers Gonzales; the
+intended bridge, Baton Rouge, is only implied. The second hop then looks for Auburn wins at Gonzales and guesses 1994,
+a game played at Auburn (gold: 1999). The automatic label is (iii) because both gold paragraphs were retrieved, but
+the error starts at the bridge, so I labelled it (i).
+
+\textbf{Example 2 (iii), WAJM.} The bridge, Atlantic City, and both gold paragraphs are
+found, but the article has two undated census paragraphs giving household sizes of 2.50 and 2.46. The first read
+answers 2.50, the second read 2.46, and the judge keeps the first. Nothing in the passages says which census the
+question means.
+
+\textbf{The remaining eight.} For \emph{Downtown}, the model took the song by Lady Antebellum, written by Luke Laird, instead
+of Neil Young's; for Ita Ford it took her nationality, the United States, instead of El Salvador, where she worked.
+For Tommy Logan and Harrysong the bridge was right, but the agent accepted an answer from passages without the
+needed fact and stopped with budget left; for Brandon Phillips it read the wrong team from the right paragraphs. The Saldus and Passendorfer answers are
+correct in substance but differ in form (date order, an extra word), and the Hotel Courtland gold answer is a whole
+sentence that a short answer cannot match.
+
+% =====================================================================
+\section{AI use and code provenance}
+I used Claude Code (Anthropic, Claude Opus 5.5) as an assistant throughout this assignment: to understand the
+starter code, to implement and debug the agent and the analysis scripts in \texttt{dev/}, to run the experiments, and
+to help write and edit this report. I chose which ideas to try and which to keep, checked the results and the
+numbers reported here, and take full responsibility for the submission. I built on the course's \texttt{a4} package
+(BM25 index, tools, LLM endpoint, scorer); no external code was copied. The loop follows IRCoT (Trivedi
+et al., ACL 2023) and ReAct (Yao et al., ICLR 2023), reciprocal rank fusion follows Cormack, Clarke and Buettcher
+(SIGIR 2009), and the data is MuSiQue (Trivedi et al., TACL 2022). The submission is a single \texttt{agent.py}; its
+few-shot examples were written by hand and contain no answers, and it stores no answers or data and never
+recognises a question.
+
+\end{document}
